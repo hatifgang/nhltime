@@ -1,0 +1,729 @@
+<!doctype html><html lang="fr"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Tableau NHL Paris</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout : en-tête « tableau d'affichage » compact, onglets collants, contenu en cartes de match puis tableaux triables. */
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --surface-2:#e9edf1; --line:#d5dce3;
+  --fg:#16212b; --muted:#5b6a78; --accent:#1d4e89; --accent-soft:#dce7f4;
+  --good:#1e7a46; --good-bg:#dff1e6; --warn:#946200; --warn-bg:#fbefd2; --bad:#b0332a; --bad-bg:#f8e0dd;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f161d; --surface:#17212b; --surface-2:#1f2b37; --line:#2c3a48;
+  --fg:#e5ecf2; --muted:#93a3b2; --accent:#7fb0ea; --accent-soft:#1d3550;
+  --good:#5fcf8c; --good-bg:#173527; --warn:#e8bb55; --warn-bg:#3a2f12; --bad:#f08a80; --bad-bg:#3d1f1c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f161d; --surface:#17212b; --surface-2:#1f2b37; --line:#2c3a48;
+  --fg:#e5ecf2; --muted:#93a3b2; --accent:#7fb0ea; --accent-soft:#1d3550;
+  --good:#5fcf8c; --good-bg:#173527; --warn:#e8bb55; --warn-bg:#3a2f12; --bad:#f08a80; --bad-bg:#3d1f1c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45;font-variant-numeric:tabular-nums}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:18px 40px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;padding-bottom:14px;border-bottom:2px solid var(--fg)}
+h1{font-family:var(--f-display);font-weight:700;font-size:2.1rem;letter-spacing:.01em;margin:0;line-height:1;text-wrap:balance}
+h1 small{display:block;font-size:.95rem;font-weight:600;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.status{display:grid;gap:2px;text-align:right;font-size:.8rem;color:var(--muted);max-width:30ch}
+.status b{font-family:var(--f-display);font-weight:600;font-size:1rem;letter-spacing:.06em;text-transform:uppercase;color:var(--fg)}
+.status b::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--good);margin-right:6px;vertical-align:1px}
+@media (max-width:560px){.status{text-align:left}}
+.meta{font-size:.82rem;color:var(--muted);display:grid;gap:2px;margin-top:10px}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:2px;overflow-x:auto;margin:14px -16px 18px;padding:0 16px;border-bottom:1px solid var(--line);scrollbar-width:none}
+@media (min-width:700px){nav.tabs{flex-wrap:wrap;overflow-x:visible;row-gap:0}}
+nav.tabs{cursor:grab} nav.tabs.drag{cursor:grabbing}
+.league{display:inline-flex;justify-self:end;border:1px solid var(--accent);border-radius:8px;overflow:hidden;margin-bottom:4px}
+.league a{font-family:var(--f-display);font-weight:700;font-size:1.05rem;letter-spacing:.06em;padding:5px 13px;white-space:nowrap;color:var(--accent);text-decoration:none}
+.league a[aria-current="page"]{background:var(--accent);color:var(--surface)}
+.league a:focus-visible{outline:2px solid var(--fg);outline-offset:-2px}
+@media (max-width:560px){.league{justify-self:start}}
+nav.tabs button{font-family:var(--f-display);font-size:1.02rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:10px 12px 8px;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+nav.tabs button:focus-visible,th:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h2{font-family:var(--f-display);font-size:1.4rem;font-weight:700;margin:0 0 4px;letter-spacing:.02em}
+.lead{color:var(--muted);font-size:.88rem;margin:0 0 14px;max-width:72ch}
+.grid-games{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.game{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px;display:grid;gap:10px;min-width:0}
+.game .hd{display:flex;justify-content:space-between;gap:8px;font-size:.8rem;color:var(--muted)}
+.matchup{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
+.team{display:grid;gap:2px}
+.team.r{text-align:right}
+.abbr{font-family:var(--f-display);font-size:1.9rem;font-weight:700;line-height:1}
+.sub{font-size:.76rem;color:var(--muted)}
+.at{font-family:var(--f-display);color:var(--muted);font-size:1.1rem}
+.bar{display:flex;height:26px;border-radius:3px;overflow:hidden;font-family:var(--f-display);font-weight:600;font-size:.95rem}
+.bar span{display:flex;align-items:center;padding:0 8px;color:#fff;min-width:0}
+.bar .a{background:var(--accent)}
+.bar .h{background:var(--muted);justify-content:flex-end}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:.84rem}
+.kv div{display:flex;justify-content:space-between;gap:6px;border-bottom:1px dotted var(--line);padding-bottom:2px}
+.kv b{font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:.74rem;font-weight:600;letter-spacing:.02em;padding:2px 8px;border-radius:999px;background:var(--surface-2);color:var(--fg);white-space:nowrap}
+.chip.good{background:var(--good-bg);color:var(--good)} .chip.warn{background:var(--warn-bg);color:var(--warn)} .chip.bad{background:var(--bad-bg);color:var(--bad)}
+.logic{font-size:.8rem;color:var(--muted);margin:0;padding-left:16px}
+.logic li{margin:1px 0}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:.84rem}
+th,td{padding:7px 9px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-family:var(--f-display);font-weight:600;font-size:.86rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--surface-2);position:sticky;top:0;cursor:pointer;user-select:none}
+th[aria-sort="ascending"]::after{content:" ▲"} th[aria-sort="descending"]::after{content:" ▼"}
+td.n,th.n{text-align:right}
+td.wrapcell{white-space:normal;min-width:200px;color:var(--muted);font-size:.78rem}
+tr:last-child td{border-bottom:0}
+.p{display:inline-block;min-width:52px;text-align:center;font-weight:600;padding:2px 6px;border-radius:3px}
+.p.good{background:var(--good-bg);color:var(--good)} .p.warn{background:var(--warn-bg);color:var(--warn)} .p.bad{background:var(--bad-bg);color:var(--bad)}
+.form{display:inline-flex;gap:2px;vertical-align:middle}
+.form i{width:10px;height:14px;border-radius:2px;display:inline-block}
+.form i.V{background:var(--good)} .form i.D{background:var(--bad)} .form i.P{background:var(--warn)}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px;font-size:.85rem}
+select{font:inherit;padding:5px 8px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--fg)}
+.section{display:grid;gap:14px;margin-bottom:26px}
+.chart{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px;overflow-x:auto}
+.chart svg text{fill:var(--muted);font-family:var(--f-body);font-size:11px}
+.chart svg .lbl{fill:var(--fg);font-family:var(--f-display);font-size:13px;font-weight:600}
+.legend{display:flex;gap:14px;font-size:.78rem;color:var(--muted);margin-bottom:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.lines{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.lines .col{min-width:0}
+.lines h4{font-family:var(--f-display);font-size:1.05rem;margin:0 0 4px}
+.lines ol{margin:0;padding-left:22px;font-size:.84rem}
+.empty{padding:18px;background:var(--surface);border:1px dashed var(--line);border-radius:6px;color:var(--muted);font-size:.9rem}
+.summary{background:var(--accent-soft);border-radius:6px;padding:12px 14px;font-size:.9rem}
+.summary ul{margin:6px 0 0;padding-left:18px}
+footer{margin-top:28px;padding-top:12px;border-top:1px solid var(--line);font-size:.8rem;color:var(--muted)}
+.warnbox{background:var(--warn-bg);color:var(--warn);border-radius:6px;padding:10px 12px;font-size:.85rem}
+@media (max-width:560px){h1{font-size:1.7rem}.abbr{font-size:1.6rem}.grid-games{grid-template-columns:1fr}.kv{font-size:.8rem;gap:4px 10px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.wmx{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface-2);display:grid;gap:8px}
+.wmx h4{margin:0;font-family:var(--f-display);font-weight:600;font-size:1.05rem}
+.wmx .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.wmx label{display:grid;gap:3px;font-size:.8rem;color:var(--muted)}
+.wmx input{font:inherit;font-size:16px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);width:100%}
+.wmx input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.wmx .row.three{grid-template-columns:1fr 1fr 1fr}
+.wmx select{font:inherit;font-size:16px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);width:100%}
+.wmx .res{font-size:.85rem;line-height:1.7}
+.runbar{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;margin-top:6px}
+.runbar button{font:600 .82rem var(--f-body);padding:8px 12px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:var(--surface);cursor:pointer}
+.runbar button.ghost{background:transparent;color:var(--accent)}
+.runbar button:disabled{opacity:.55;cursor:wait}
+.runbar button:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+#run-msg{font-size:.8rem;color:var(--muted);min-height:1.2em}
+@media (max-width:560px){.runbar{justify-content:flex-start}}
+.journal{display:grid;gap:12px}
+.journal article{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;display:grid;gap:6px}
+.journal h3{margin:0;font-family:var(--f-display);font-size:1.1rem}
+.journal ul{margin:0;padding-left:18px;font-size:.88rem}
+.pick{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;display:grid;gap:6px;min-width:0}
+.pick .top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.pick .rank{font-family:var(--f-display);font-weight:700;font-size:1.5rem;color:var(--muted);min-width:1.4em}
+.pick .who{flex:1;min-width:0}
+.pick .who b{font-family:var(--f-display);font-size:1.25rem;font-weight:700}
+.pick .big{font-family:var(--f-display);font-weight:700;font-size:1.6rem}
+.pick ul{margin:0;padding-left:18px;font-size:.84rem;color:var(--muted)}
+.picks{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.method{background:var(--accent-soft);border-radius:6px;padding:12px 14px;font-size:.88rem;line-height:1.55}
+.method p{margin:0 0 6px}
+.pro{border-left:3px solid var(--line);padding:6px 10px;font-size:.84rem;display:grid;gap:4px}
+.pro.ok{border-left-color:var(--good)}
+.pro ul{margin:0;padding-left:18px;color:var(--muted)}
+.bank{display:flex;gap:8px;align-items:center;font-size:.85rem;margin-bottom:6px}
+.bank input{font:inherit;font-size:16px;width:110px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg)}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1><small id="h-eyebrow">Aide à la décision · NHL</small><span id="h-title">Soirée NHL</span></h1>
+      <div class="meta" id="h-meta"></div>
+    </div>
+    <div class="status"><nav class="league" aria-label="Championnat"><a href="index.html" aria-current="page">NHL</a><a href="nba.html">NBA</a><a href="hockey.html">KHL / Europe</a></nav><span>Dernier passage</span><b id="h-mode"></b><span>Automatique vers 9 h, 17 h 30 et 23 h 30 (Paris), même PC éteint</span><div class="runbar"><button type="button" class="run" data-mode="update">Lancer MISE À JOUR</button><button type="button" class="run" data-mode="prematch">Lancer PRÉ-MATCH</button><button type="button" class="ghost" id="xls">Excel</button></div><span id="run-msg" role="status"></span></div>
+  </header>
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+  <main id="panels"></main>
+  <footer id="foot"></footer>
+</div>
+
+<script>
+let D = null;
+(() => { const n = document.getElementById('tabs'); if(!n) return;
+  n.addEventListener('wheel', e => { if(n.scrollWidth > n.clientWidth && Math.abs(e.deltaY) > Math.abs(e.deltaX)){ n.scrollLeft += e.deltaY; e.preventDefault(); } }, {passive:false});
+  let x0 = null, s0 = 0, moved = false;
+  n.addEventListener('pointerdown', e => { if(e.pointerType !== 'mouse' || n.scrollWidth <= n.clientWidth) return; x0 = e.clientX; s0 = n.scrollLeft; moved = false; });
+  addEventListener('pointermove', e => { if(x0 == null) return; const dx = e.clientX - x0; if(Math.abs(dx) > 4){ moved = true; n.classList.add('drag'); } n.scrollLeft = s0 - dx; });
+  addEventListener('pointerup', () => { x0 = null; n.classList.remove('drag'); });
+  n.addEventListener('click', e => { if(moved){ e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+})();
+const $ = (s, el=document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pct = v => v == null ? '—' : (v*100).toFixed(0) + ' %';
+const pcls = (v, hi=.55, lo=.4) => v == null ? '' : v >= hi ? 'good' : v >= lo ? 'warn' : 'bad';
+const P = (v, hi, lo) => v == null ? '<span class="sub">n.d.</span>' : `<span class="p ${pcls(v,hi,lo)}">${pct(v)}</span>`;
+const nd = v => v == null || v === '' ? '<span class="sub">n.d.</span>' : esc(v);
+const frDate = iso => { if(!iso) return ''; const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; };
+const valChip = v => !v ? '' : v.startsWith('Valeur') ? `<span class="chip good">${v}</span>` : v.startsWith('Cote déf') ? `<span class="chip bad">${v}</span>` : v === 'Neutre' ? `<span class="chip">${v}</span>` : `<span class="chip">${esc(v)}</span>`;
+const confChip = c => `<span class="chip ${c==='Élevée'?'good':c==='Moyenne'?'warn':'bad'}">Confiance ${esc(c)}</span>`;
+const form = arr => `<span class="form" aria-label="${(arr||[]).join(' ')}">${(arr||[]).map(r=>`<i class="${r}" title="${r==='V'?'Victoire':r==='D'?'Défaite':'Défaite prol./TB'}"></i>`).join('')}</span>`;
+
+const TABS = [['selec','Sélection du soir'],['btts','Les deux marquent'],['soiree','Soirée du jour'],['joueurs','Joueurs à surveiller'],['equipes','Équipes'],['blessures','Blessures & compos'],['veille','Résultats de la veille'],['apres','Après-match'],['suivi','Mes paris suivis'],['fiab','Fiabilité'],['appr','Apprentissage']];
+
+function sortable(table){
+  const ths = [...table.querySelectorAll('th')];
+  ths.forEach((th,i) => {
+    th.tabIndex = 0;
+    const go = () => {
+      const dir = th.getAttribute('aria-sort') === 'descending' ? 'ascending' : 'descending';
+      ths.forEach(t => t.removeAttribute('aria-sort')); th.setAttribute('aria-sort', dir);
+      const rows = [...table.tBodies[0].rows];
+      rows.sort((a,b) => {
+        const x = a.cells[i].dataset.v ?? a.cells[i].textContent, y = b.cells[i].dataset.v ?? b.cells[i].textContent;
+        const nx = parseFloat(x), ny = parseFloat(y);
+        const c = (!isNaN(nx) && !isNaN(ny)) ? nx - ny : String(x).localeCompare(String(y), 'fr');
+        return dir === 'ascending' ? c : -c;
+      });
+      rows.forEach(r => table.tBodies[0].appendChild(r));
+    };
+    th.addEventListener('click', go); th.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){e.preventDefault();go();} });
+  });
+}
+function table(cols, rows){
+  // cols: [label, fn(row) -> [html, sortValue], numeric?]
+  return `<div class="tbl"><table><thead><tr>${cols.map(c=>`<th class="${c[2]?'n':''}">${c[0]}</th>`).join('')}</tr></thead><tbody>${
+    rows.map(r => `<tr>${cols.map(c => { const [h,v,cls] = c[1](r); return `<td class="${c[2]?'n':''} ${cls||''}" ${v!=null?`data-v="${esc(v)}"`:''}>${h}</td>`; }).join('')}</tr>`).join('')
+  }</tbody></table></div>`;
+}
+
+function soiree(){
+  const g = D.games;
+  if(!g.length) return `<div class="empty">Aucun match NHL programmé pour la soirée du ${frDate(D.meta.soiree)} (heure de l'Est).</div>`;
+  const vals = g.flatMap(x => [[x.exterieur,x.valeur_ext,x.p_ext,x.imp_ext],[x.domicile,x.valeur_dom,x.p_dom,x.imp_dom]]).filter(v => v[1]==='Valeur potentielle');
+  const prelim = D.meta.mode !== 'PRÉ-MATCH' ? `<div class="warnbox">Prédictions préliminaires (avant compositions et gardiens partants). La version PRÉ-MATCH de la soirée les remplacera.</div>` : '';
+  return `<div class="section">${prelim}
+    <div class="summary"><b>${g.length} match${g.length>1?'s':''} ce soir.</b> ${vals.length ? `Valeur potentielle détectée : ${vals.map(v=>`${v[0]} (modèle ${pct(v[2])} vs cote ${pct(v[3])})`).join(', ')}.` : 'Aucune valeur potentielle détectée sur les cotes disponibles.'}
+    ${(D.meta.conflits||[]).length ? `<ul>${D.meta.conflits.map(c=>`<li>Conflit de sources : ${esc(c)}</li>`).join('')}</ul>`:''}</div>
+    <div class="grid-games">${g.map(card).join('')}</div></div>`;
+}
+function card(x){
+  const ga = x.gardiens[x.exterieur], gh = x.gardiens[x.domicile];
+  const gl = (gg) => `${esc(gg.nom)} <span class="sub">(${esc(gg.statut)})</span>`;
+  const started = !['FUT','PRE'].includes(x.etat);
+  return `<article class="game">
+    <div class="hd"><span>${esc(x.debut_paris)} Paris · ${esc(x.lieu)}</span><span>${started?'<span class="chip warn">Commencé / terminé</span>':''}</span></div>
+    <div class="matchup">
+      <div class="team"><span class="abbr">${x.exterieur}</span><span class="sub">Extérieur${x.b2b.includes(x.exterieur)?' · 2e match en 2 soirs':''}</span></div>
+      <span class="at">@</span>
+      <div class="team r"><span class="abbr">${x.domicile}</span><span class="sub">Domicile${x.b2b.includes(x.domicile)?' · 2e match en 2 soirs':''}</span></div>
+    </div>
+    <div class="bar" role="img" aria-label="Probabilités ${x.exterieur} ${pct(x.p_ext)}, ${x.domicile} ${pct(x.p_dom)}"><span class="a" style="width:${x.p_ext*100}%">${pct(x.p_ext)}</span><span class="h" style="width:${x.p_dom*100}%">${pct(x.p_dom)}</span></div>
+    <div class="kv">
+      <div><span>Cote ${x.exterieur}</span><b>${x.cote_ext ?? 'non disp.'}</b></div><div><span>Cote ${x.domicile}</span><b>${x.cote_dom ?? 'non disp.'}</b></div>
+      <div><span>Implicite</span><b>${pct(x.imp_ext)}</b></div><div><span>Implicite</span><b>${pct(x.imp_dom)}</b></div>
+      <div><span>Buts attendus</span><b>${x.buts_attendus_ext}</b></div><div><span>Buts attendus</span><b>${x.buts_attendus_dom}</b></div>
+      <div><span>Égalité après 60 min</span><b>${pct(x.p_nul_reg)}</b></div><div><span>Repos (j)</span><b>${x.repos[x.exterieur] ?? '—'} / ${x.repos[x.domicile] ?? '—'}</b></div>
+    </div>
+    <div class="sub">60 min (1X2) · modèle ${x.exterieur} ${pct(x.p_reg_ext)} / nul ${pct(x.p_nul_reg)} / ${x.domicile} ${pct(x.p_reg_dom)}${x.cote1x2 ? ` · cotes ${x.cote1x2.ext} / ${x.cote1x2.nul} / ${x.cote1x2.dom} (impl. ${pct(x.imp1x2.ext)} / ${pct(x.imp1x2.nul)} / ${pct(x.imp1x2.dom)})` : ' · cotes 1X2 non disponibles'}</div>
+    <div class="sub">Gardiens : ${gl(ga)} · ${gl(gh)}</div>
+    <div class="chips">${confChip(x.confiance)}${x.valeur_ext!=='Neutre'&&x.valeur_ext!=='Cote non disponible'?valChip(x.valeur_ext+' '+x.exterieur):''}${x.valeur_dom!=='Neutre'&&x.valeur_dom!=='Cote non disponible'?valChip(x.valeur_dom+' '+x.domicile):''}${x.cote_ext==null?'<span class="chip">Cote non disponible</span>':''}${x.valeur1x2?Object.entries(x.valeur1x2).filter(([k,v])=>v==='Valeur potentielle').map(([k])=>valChip('Valeur potentielle 60 min '+(k==='dom'?x.domicile:k==='ext'?x.exterieur:'nul'))).join(''):''}</div>
+    ${x.pro ? `<div class="pro ${x.pro.verdict==='Jouable'?'ok':''}"><b>Lecture pro : ${esc(x.pro.verdict)}${x.pro.side?` ${esc(x.pro.side)}${x.pro.cote?` à ${x.pro.cote}`:''}`:''}</b>${x.pro.mise_pct?` <span class="chip good">Mise conseillée ${x.pro.mise_pct} % de ta bankroll${miseEuros(x.pro.mise_pct)}</span>`:''}<ul>${x.pro.notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul></div>` : ''}
+    ${x.parieurs ? `<div class="sub">Parieurs (covers.com) : public ${x.parieurs.public_ext ?? '?'} % ${x.exterieur} / ${x.parieurs.public_dom ?? '?'} % ${x.domicile}${x.parieurs.leaders_dom!=null?` · leaders ${x.parieurs.leaders_ext}–${x.parieurs.leaders_dom}`:''}${x.parieurs.total!=null?` · total ${x.parieurs.total} : ${x.parieurs.over_pct} % plus${x.parieurs.leaders_over!=null?`, leaders ${x.parieurs.leaders_over} plus / ${x.parieurs.leaders_under} moins`:''}`:''}${x.parieurs.mouvement!=null?` · cote ${x.domicile} ${x.parieurs.mouvement>0?'+':''}${(x.parieurs.mouvement*100).toFixed(1)} pts depuis l'ouverture`:''}</div>` : ''}
+    <ul class="logic">${x.logique.slice(0,8).map(l=>`<li>${esc(l)}</li>`).join('')}</ul>
+    ${x.source_cotes?`<div class="sub">Cotes : ${esc(x.source_cotes)}${x.heure_cotes?' à '+esc(x.heure_cotes):''}</div>`:''}
+    <div class="wmx" data-g="${x.game_id}"><h4>Mes cotes Winamax</h4><div class="row"><label>${x.exterieur}<input inputmode="decimal" data-s="ext" placeholder="ex. 2,10"></label><label>${x.domicile}<input inputmode="decimal" data-s="dom" placeholder="ex. 1,75"></label></div><div class="res sub"></div></div>
+  </article>`;
+}
+
+function joueurs(){
+  const pl = D.players;
+  if(!pl.length) return `<div class="empty">Aucun joueur à surveiller : pas de match ce soir ou données non disponibles.</div>`;
+  const matches = [...new Set(pl.map(p=>p.match))];
+  return `<div class="section"><p class="lead">Par défaut : top 5 par équipe. Choisis une équipe pour voir tout son effectif aligné ce soir. P(passe) = au moins 1 passe décisive. Probabilités = taux par match pondéré (saison en cours + 2025-26) ajusté à l'adversaire du soir, loi de Poisson. Cliquez un en-tête pour trier.</p>
+  <div class="controls"><label for="f-team">Équipe</label><select id="f-team"><option value="">Top 5 de chaque équipe</option>${[...new Set(pl.map(p=>p.equipe))].sort().map(t=>`<option value="${t}">${t} (contre ${esc(pl.find(p=>p.equipe===t).adversaire)})</option>`).join('')}</select>
+    <label for="f-match">Match</label><select id="f-match"><option value="">Tous les matchs</option>${matches.map(m=>`<option>${esc(m)}</option>`).join('')}</select>
+    <span class="sub" id="pl-count"></span></div>
+  <div class="wmx" id="wmx-pl"><h4>Mes cotes Winamax joueur</h4><label>Joueur<select id="wp-sel">${pl.filter(p=>!p.statut.startsWith('Confirmé absent')).slice().sort((a,b)=>a.nom.localeCompare(b.nom,'fr')).map(p=>`<option value="${p.id}">${esc(p.nom)} (${p.equipe})</option>`).join('')}</select></label><div class="row three"><label>Buteur<input inputmode="decimal" data-k="but" placeholder="ex. 3,20"></label><label>Passeur<input inputmode="decimal" data-k="passe" placeholder="ex. 2,40"></label><label>Point<input inputmode="decimal" data-k="point" placeholder="ex. 1,70"></label></div><div class="res sub"></div></div>
+  <div id="pl-table"></div></div>`;
+}
+function renderPlayers(){
+  const team = $('#f-team')?.value || '', match = $('#f-match')?.value || '';
+  const rows = D.players.filter(p => (team ? p.equipe === team : p.top5 !== false) && (!match || p.match === match)).sort((a,b)=>b.p_point-a.p_point);
+  const c = $('#pl-count'); if(c) c.textContent = team ? `${rows.length} joueurs de ${team} alignés ce soir` : `${rows.length} joueurs (top 5 par équipe)`;
+  $('#pl-table').innerHTML = table([
+    ['Joueur', p=>[`<b>${esc(p.nom)}</b> <span class="sub">${p.pos}</span>`, p.nom]],
+    ['Éq.', p=>[p.equipe, p.equipe]], ['Adv.', p=>[p.adversaire, p.adversaire]],
+    ['P(but)', p=>[P(p.p_but,.35,.2), p.p_but], 1], ['Cote but', p=>[nd(p.cote_but), p.cote_but ?? -1], 1], ['P(passe)', p=>[P(p.p_passe,.45,.3), p.p_passe], 1], ['P(point)', p=>[P(p.p_point,.6,.45), p.p_point], 1], ['Cote pt', p=>[nd(p.cote_point), p.cote_point ?? -1], 1],
+    ['Valeur', p=>[[p.valeur_but&&p.valeur_but!=='Neutre'?valChip(p.valeur_but+' (but)'):'', p.valeur_point&&p.valeur_point!=='Neutre'?valChip(p.valeur_point+' (pt)'):''].join(' ')||'<span class="sub">—</span>', p.valeur_but||'']],
+    ['Statut', p=>[`<span class="chip ${p.statut.startsWith('Incertain')?'warn':p.statut.startsWith('Confirmé présent')?'good':''}">${esc(p.statut)}</span>`, p.statut]],
+    ['MJ', p=>[p.mj,p.mj],1], ['B', p=>[p.buts,p.buts],1], ['A', p=>[p.passes,p.passes],1], ['PTS', p=>[p.points,p.points],1], ['Tirs', p=>[p.tirs,p.tirs],1], ['% tirs', p=>[nd(p.pct_tirs),p.pct_tirs],1],
+    ['B/M', p=>[nd(p.buts_match),p.buts_match],1], ['PTS/M', p=>[nd(p.pts_match),p.pts_match],1],
+    ['B/M 10 der.', p=>[nd(p.l10_buts_match),p.l10_buts_match],1], ['PTS/M 10 der.', p=>[nd(p.l10_pts_match),p.l10_pts_match],1],
+    ['B/M 25-26', p=>[nd(p.prev_buts_match),p.prev_buts_match],1], ['PTS/M 25-26', p=>[nd(p.prev_pts_match),p.prev_pts_match],1],
+    ['TG', p=>[nd(p.toi),p.toi],1], ['TG AN', p=>[nd(p.toi_an),p.toi_an],1], ['Ligne', p=>[esc(p.ligne),p.ligne]], ['Unité AN', p=>[esc(p.unite_an),p.unite_an]],
+    ['Séquence', p=>[esc(p.sequence),p.sequence]], ['Vs adv.', p=>[esc(p.vs_adv),p.vs_adv]],
+    ['Logique', p=>[esc(p.logique),null,'wrapcell']],
+  ], rows);
+  sortable($('#pl-table table'));
+}
+
+function equipes(){
+  return `<div class="section"><p class="lead">Classement et statistiques de la saison ${D.meta.saison.slice(0,4)}-${D.meta.saison.slice(6)} (nhl.com). Forme : 10 derniers matchs, le plus récent à droite.</p>
+  <div class="controls"><label for="f-conf">Conférence</label><select id="f-conf"><option value="">Toutes</option>${[...new Set(D.teams.map(t=>t.conference))].map(c=>`<option>${esc(c)}</option>`).join('')}</select></div>
+  <div id="tm-table"></div>
+  <h2>Buts pour et contre par match</h2><div class="chart" id="tm-chart"></div></div>`;
+}
+function renderTeams(conf){
+  const rows = D.teams.filter(t=>!conf||t.conference===conf).sort((a,b)=>(b.pts-a.pts)||(a.mj-b.mj));
+  $('#tm-table').innerHTML = table([
+    ['Équipe', t=>[`<b>${t.equipe}</b> <span class="sub">${esc(t.nom)}</span>`, t.equipe]], ['Div.', t=>[`${esc((t.division||'').slice(0,4))} ${t.rang_div}`, t.rang_div],1], ['Conf.', t=>[t.rang_conf,t.rang_conf],1],
+    ['MJ',t=>[t.mj,t.mj],1],['V',t=>[t.v,t.v],1],['D',t=>[t.d,t.d],1],['DP',t=>[t.dp,t.dp],1],['PTS',t=>[`<b>${t.pts}</b>`,t.pts],1],
+    ['BP/M',t=>[nd(t.bp_match),t.bp_match],1],['BC/M',t=>[nd(t.bc_match),t.bc_match],1],['Tirs/M',t=>[nd(t.tirs_match),t.tirs_match],1],['Tirs ctr/M',t=>[nd(t.tirs_contre_match),t.tirs_contre_match],1],
+    ['% AN',t=>[nd(t.pct_an),t.pct_an],1],['% DN',t=>[nd(t.pct_dn),t.pct_dn],1],['% arrêts',t=>[t.pct_arrets==null?'n.d.':t.pct_arrets.toFixed(3),t.pct_arrets],1],['PDO',t=>[t.pdo==null?'n.d.':`<span class="chip ${t.chance_bm>=0.15?'bad':t.chance_bm<=-0.15?'good':''}" title="% de tirs + % d'arrêts à 5 contre 5 (1000 = normal). Au-dessus : chance qui ne dure pas">${t.pdo}</span>`,t.pdo??1000],1],['xG pour / contre',t=>[t.xgf==null?'n.d.':`${t.xgf} / ${t.xga}<br><span class="sub">écart ${(t.xgf-t.xga>0?'+':'')+(t.xgf-t.xga).toFixed(2)}</span>`,t.xgf==null?-9:t.xgf-t.xga],1],['Corsi',t=>[t.corsi==null?'n.d.':`${t.corsi} %<br><span class="sub">serré ${t.corsi_serre ?? 'n.d.'} %</span>`,t.corsi??50],1],
+    ['10 der.',t=>[t.bilan10,t.bilan10]],['Forme',t=>[form(t.forme10),(t.forme10||[]).filter(r=>r==='V').length]],['Série',t=>[t.serie,t.serie]],['Dom.',t=>[t.dom,t.dom]],['Ext.',t=>[t.ext,t.ext]],
+  ], rows);
+  sortable($('#tm-table table'));
+  chartTeams(rows);
+}
+function chartTeams(rows){
+  const r = rows.filter(t=>t.bp_match!=null).sort((a,b)=>(b.bp_match-b.bc_match)-(a.bp_match-a.bc_match));
+  if(!r.length){ $('#tm-chart').innerHTML = '<div class="sub">Données non disponibles.</div>'; return; }
+  const max = Math.ceil(Math.max(...r.flatMap(t=>[t.bp_match,t.bc_match]))) || 1;
+  const rowH = 20, left = 48, w = 640, top = 22, h = top + r.length*rowH + 24;
+  const x = v => left + (v/max)*(w-left-20);
+  let s = `<svg viewBox="0 0 ${w} ${h}" width="100%" style="min-width:420px" role="img" aria-label="Buts pour et contre par match">`;
+  for(let t=0;t<=max;t++){ s += `<line x1="${x(t)}" x2="${x(t)}" y1="${top-4}" y2="${h-22}" stroke="var(--line)"/><text x="${x(t)}" y="${h-8}" text-anchor="middle">${t}</text>`; }
+  r.forEach((t,i)=>{ const y = top + i*rowH + rowH/2; const a = x(t.bp_match), b = x(t.bc_match); const good = t.bp_match >= t.bc_match;
+    s += `<text class="lbl" x="${left-8}" y="${y+4}" text-anchor="end">${t.equipe}</text>
+      <line x1="${Math.min(a,b)}" x2="${Math.max(a,b)}" y1="${y}" y2="${y}" stroke="${good?'var(--good)':'var(--bad)'}" stroke-width="3" opacity=".55"/>
+      <circle cx="${b}" cy="${y}" r="5" fill="var(--bad)"><title>${t.equipe} buts contre/match : ${t.bc_match}</title></circle>
+      <circle cx="${a}" cy="${y}" r="5" fill="var(--good)"><title>${t.equipe} buts pour/match : ${t.bp_match}</title></circle>`; });
+  s += `<text x="${left}" y="12">Trié par différentiel (meilleur en haut)</text></svg>`;
+  $('#tm-chart').innerHTML = `<div class="legend"><span><i style="background:var(--good)"></i>Buts pour / match</span><span><i style="background:var(--bad)"></i>Buts contre / match</span></div>` + s;
+}
+
+function blessures(){
+  const inj = D.injuries || [];
+  const order = s => s.startsWith('Confirmé absent') ? 0 : s.startsWith('Incertain') ? 1 : 2;
+  const injHtml = inj.length ? table([
+    ['Équipe', i=>[i.team,i.team]], ['Joueur', i=>[`<b>${esc(i.player)}</b>`,i.player]],
+    ['Statut', i=>[`<span class="chip ${order(i.status)===0?'bad':order(i.status)===1?'warn':'good'}">${esc(i.status)}</span>`, order(i.status)]],
+    ['Nature', i=>[nd(i.detail),i.detail]], ['Mise à jour', i=>[nd(i.updated),i.updated]], ['Source', i=>[nd(i.source),i.source]],
+  ], inj.slice().sort((a,b)=>order(a.status)-order(b.status)||a.team.localeCompare(b.team))) : `<div class="empty">Blessures non disponibles pour cette soirée (non consultées sur nhl.com ou aucune information publiée).</div>`;
+  const lu = D.games.map(x => {
+    const L = x.lineups || {}; const side = (s, ab) => { const t = (L[s]||{}); const has = (t.lines||[]).length;
+      return `<div class="col"><h4>${ab}</h4>${has?`<ol>${t.lines.map(l=>`<li>${esc(l)}</li>`).join('')}</ol><div class="sub">Défense : ${(t.pairs||[]).map(esc).join(' · ')||'n.d.'}</div><div class="sub">AN1 : ${nd(t.pp1)} · AN2 : ${nd(t.pp2)}</div>${t.changes?`<div class="sub">Changements : ${esc(t.changes)}</div>`:''}`:'<div class="sub">Composition non disponible.</div>'}
+      <div class="sub">Gardien : ${esc(x.gardiens[ab].nom)} (${esc(x.gardiens[ab].statut)})</div>
+      ${x.gardiens[ab].stats?`<div class="sub">${x.gardiens[ab].stats.mj} MJ · % arr. ${x.gardiens[ab].stats.pct_arrets ?? 'n.d.'} · MBC ${x.gardiens[ab].stats.moy_bc ?? 'n.d.'} · 25-26 : ${x.gardiens[ab].stats.prev_pct_arrets ?? 'n.d.'} · forme : ${esc(x.gardiens[ab].stats.forme5)}</div>`:`<div class="sub">Gardiens de l'équipe : ${x.gardiens[ab].autres.map(esc).join(', ')}</div>`}</div>`; };
+    return `<div class="game"><div class="hd"><b style="color:var(--fg)">${x.exterieur} @ ${x.domicile}</b><span class="chip ${/^(publi|confirm)/i.test(L.status||'')?'good':/^probable/i.test(L.status||'')?'warn':''}">Compos : ${esc(L.status||'non disponibles')}</span></div>
+      <div class="lines">${side('away',x.exterieur)}${side('home',x.domicile)}</div>${L.source?`<div class="sub">Source : ${esc(L.source)}${L.time?' à '+esc(L.time):''}</div>`:''}</div>`;
+  }).join('');
+  return `<div class="section"><h2>Blessures et statuts</h2>${injHtml}</div><div class="section"><h2>Compositions par match</h2>${lu || '<div class="empty">Aucun match ce soir.</div>'}</div>`;
+}
+
+function veille(){
+  const r = D.results || [];
+  if(!r.length) return `<div class="empty">Aucun résultat pour la soirée du ${frDate(D.meta.veille)}.</div>`;
+  return `<div class="section"><p class="lead">Soirée du ${frDate(D.meta.veille)} (heure de l'Est) · source nhl.com.</p>${table([
+    ['Match', x=>[`<b>${x.exterieur}</b> ${x.score_ext} – ${x.score_dom} <b>${x.domicile}</b>`, x.exterieur]],
+    ['Vainqueur', x=>[x.vainqueur,x.vainqueur]], ['Mode', x=>[esc(x.mode),x.mode]], ['Tirs', x=>[`${x.tirs_ext ?? '?'} – ${x.tirs_dom ?? '?'}`, (x.tirs_ext||0)+(x.tirs_dom||0)],1],
+    ['Lieu', x=>[esc(x.lieu),x.lieu]], ['Faits marquants', x=>[esc((x.faits||[]).join(' · ')||'—'),null,'wrapcell']],
+  ], r)}</div>`;
+}
+
+function fiab(){
+  const rel = D.reliability || [];
+  const any = rel.some(r=>r.n>0);
+  const cards = rel.map(r => r.n ? `<article class="game"><div class="hd"><b style="color:var(--fg);font-family:var(--f-display);font-size:1.15rem">${esc(r.type)}</b><span>${r.n} paris évalués · ${frDate(r.premiere_date)} → ${frDate(r.derniere_date)}</span></div>
+     <div class="kv"><div><span>Réussite quand proba ≥ 50 %</span><b>${r.reussite_fav==null?'—':pct(r.reussite_fav)} <span class="sub">(${r.n_fav})</span></b></div>
+     <div><span>Réussite « valeur potentielle »</span><b>${r.reussite_valeur==null?'—':pct(r.reussite_valeur)} <span class="sub">(${r.n_valeur})</span></b></div>
+     <div><span>Probabilité moyenne prévue</span><b>${pct(r.prevu_moy)}</b></div><div><span>Fréquence réelle</span><b>${pct(r.reel_moy)}</b></div>
+     <div><span>Score de Brier (plus bas = mieux)</span><b>${r.brier}</b></div></div>
+     ${r.tranches.length?table([['Tranche',t=>[t.tranche,t.tranche]],['N',t=>[t.n,t.n],1],['Prévu',t=>[pct(t.prevu),t.prevu],1],['Réel',t=>[pct(t.reel),t.reel],1]], r.tranches):''}</article>`
+   : `<article class="game"><b>${esc(r.type)}</b><span class="sub">Aucune prédiction évaluée pour l'instant.</span></article>`).join('');
+  const hist = (D.history||[]).slice().reverse().slice(0,150);
+  return `<div class="section"><p class="lead">Historique des prédictions évaluées après chaque MISE À JOUR. ${any?'':'Les premières statistiques apparaîtront après la première soirée prédite puis mise à jour.'}</p>
+    <div class="grid-games">${cards}</div></div>
+    ${hist.length?`<div class="section"><h2>Dernières prédictions évaluées</h2>${table([
+      ['Date',h=>[frDate(h.date),h.date]],['Match',h=>[esc(h.match),h.match]],['Type',h=>[esc(h.type),h.type]],['Sélection',h=>[esc(h.selection),h.selection]],
+      ['Proba',h=>[P(h.prob),h.prob],1],['Cote',h=>[nd(h.cote),h.cote??-1],1],['Valeur',h=>[valChip(h.valeur)||'—',h.valeur||'']],
+      ['Résultat',h=>[h.resultat===1?'<span class="chip good">Gagné</span>':h.resultat===0?'<span class="chip bad">Perdu</span>':'<span class="chip">N’a pas joué</span>',h.resultat]],
+    ], hist)}</div>`:''}`;
+}
+
+function init(){
+  const m = D.meta;
+  $('#h-title').textContent = `Soirée du ${frDate(m.soiree)}`;
+  $('#h-mode').textContent = `${m.mode} · ${String(m.genere).replace(/^(\d\d\/\d\d)\/\d{4} (\d\d:\d\d).*/, '$1 à $2')}`;
+  $('#h-meta').innerHTML = `<span>Généré le ${esc(m.genere)} · date de soirée en heure de l'Est (matchs dans la nuit, heure de Paris)</span>` +
+    Object.entries(m.sources).map(([k,v])=>`<span>${esc(k)} : ${esc(v)}</span>`).join('');
+  const views = {selec, btts, soiree, joueurs, equipes, blessures, veille, apres, suivi, fiab, appr};
+  $('#tabs').innerHTML = TABS.map(([id,l])=>`<button role="tab" id="t-${id}" aria-controls="p-${id}" aria-selected="false">${l}</button>`).join('');
+  $('#panels').innerHTML = TABS.map(([id])=>`<section role="tabpanel" id="p-${id}" aria-labelledby="t-${id}" hidden>${views[id]()}</section>`).join('');
+  if(D.players.length){ renderPlayers(); $('#f-match').addEventListener('change', renderPlayers); $('#f-team').addEventListener('change', renderPlayers); }
+  renderTeams(''); $('#f-conf').addEventListener('change', e=>renderTeams(e.target.value));
+  document.querySelectorAll('#panels .tbl table').forEach(t => { if(!t.closest('#pl-table') && !t.closest('#tm-table')) sortable(t); });
+  const show = id => { TABS.forEach(([t])=>{ $('#t-'+t).setAttribute('aria-selected', t===id); $('#p-'+t).hidden = t!==id; }); try{ localStorage.setItem('nhl-tab', id); }catch(e){} };
+  $('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if(b) show(b.id.slice(2)); });
+  let start = 'selec'; try{ start = (location.hash.slice(1) && TABS.some(t=>t[0]===location.hash.slice(1))) ? location.hash.slice(1) : (localStorage.getItem('nhl-tab') || 'soiree'); }catch(e){}
+  show(TABS.some(t=>t[0]===start) ? start : 'selec');
+  $('#foot').innerHTML = `Estimations statistiques, pas des certitudes. Comparez toujours avec les cotes de votre opérateur. Les paris comportent un risque de perte : misez de façon responsable, uniquement ce que vous pouvez vous permettre de perdre. Sources : nhl.com (API officielle, article des compositions projetées, cotes du partenaire de paris affiché par nhl.com).`;
+}
+// Cotes Winamax saisies à la main, synchronisées entre appareils (db privé) avec repli local
+const WMX = {data:{}, ref:null};
+const num = v => { const n = parseFloat(String(v||'').replace(',','.')); return n>1 ? n : null; };
+function wmxCalc(box){
+  const g = D.games.find(x=>String(x.game_id)===box.dataset.g); if(!g) return;
+  const ce = num(box.querySelector('[data-s=ext]').value), cd = num(box.querySelector('[data-s=dom]').value);
+  const out = box.querySelector('.res');
+  if(!ce || !cd){ out.innerHTML = 'Tape les deux cotes (ex. 1,85) pour les comparer au modèle.'; return; }
+  const ie = 1/ce, id = 1/cd, marge = ie+id-1, pe = ie/(ie+id), pd = id/(ie+id);
+  const verdict = (m,c) => { const d = m-c; return d>=0.05 ? `<span class="chip good">Valeur potentielle (+${(d*100).toFixed(0)} pts)</span>` : d<=-0.05 ? `<span class="chip bad">Cote défavorable (${(d*100).toFixed(0)} pts)</span>` : `<span class="chip">Neutre</span>`; };
+  out.innerHTML = `${g.exterieur} : implicite ${pct(pe)} vs modèle ${pct(g.p_ext)} ${verdict(g.p_ext,pe)}<br>${g.domicile} : implicite ${pct(pd)} vs modèle ${pct(g.p_dom)} ${verdict(g.p_dom,pd)}<br>Marge Winamax sur ce match : ${(marge*100).toFixed(1)} %`;
+}
+function bankroll(){ try{ return num(localStorage.getItem('nhl-bankroll')); }catch(e){ return null; } }
+function miseEuros(pctv){ const b = bankroll(); return b && pctv ? ` (≈ ${(b*pctv/100).toFixed(2)} €)` : ''; }
+function kellyTxt(p, cote){ const k = (p*cote-1)/(cote-1); if(!(k>0)) return ''; const f = Math.min(0.02, k/4); const b = bankroll(); return ` · Mise conseillée : ${(f*100).toFixed(1)} % de ta bankroll${b?` (≈ ${(b*f).toFixed(2)} €)`:''}`; }
+function ambCalc(box){
+  const S = D.selection||{}; const p = [...(S.deux_points||[]), ...(S.deux_buts||[])][+box.dataset.amb]; if(!p) return;
+  const c = num(box.querySelector('[data-ambc]').value), out = box.querySelector('.res');
+  if(!c){ out.innerHTML = ''; return; }
+  const ev = p.prob*c - 1;
+  out.innerHTML = (ev >= 0.05 ? `<span class="chip good">Valeur : +${(ev*100).toFixed(0)} % d'espérance</span>` : ev <= -0.05 ? `<span class="chip bad">Cote trop basse (${(ev*100).toFixed(0)} %)</span>` : `<span class="chip">À peu près juste</span>`) + (ev>0 ? kellyTxt(p.prob,c) : '');
+}
+document.addEventListener('input', e => {
+  const a = e.target.closest('[data-amb]'); if(a && e.target.dataset.ambc!==undefined) ambCalc(a);
+  if(e.target.id==='bankroll'){ try{ localStorage.setItem('nhl-bankroll', e.target.value.trim()); }catch(err){} }
+});
+document.addEventListener('focusin', e => { if(e.target.id==='bankroll' && !e.target.value){ const b = bankroll(); if(b) e.target.value = String(b); } });
+document.addEventListener('input', e => { if(e.target.id!=='bt-cote') return; const b = D.selection?.buteur; const c = num(e.target.value), out = $('#bt-res'); if(!b || !c){ out.innerHTML=''; return; } const ev = b.p_but*c-1;
+  out.innerHTML = (ev >= 0.05 ? `<span class="chip good">Valeur : +${(ev*100).toFixed(0)} % d'espérance</span>` : ev <= -0.05 ? `<span class="chip bad">Cote trop basse (${(ev*100).toFixed(0)} %)</span>` : `<span class="chip">À peu près juste</span>`) + (ev>0 ? kellyTxt(b.p_but,c) : ''); });
+document.addEventListener('input', e => {
+  if(e.target.dataset.safe===undefined) return;
+  const S = D.selection?.safe; if(!S) return;
+  const odds = [...document.querySelectorAll('[data-safe]')].map((i,k)=>num(i.value) || S.legs[k].cote);
+  const cote = odds.reduce((a,b)=>a*b,1), ev = S.prob*cote-1;
+  $('#safe-res').innerHTML = `Cote du ticket : <b>${cote.toFixed(2)}</b> (cote juste ${S.cote_juste}). ` + (ev >= 0.05 ? `<span class="chip good">Valeur : +${(ev*100).toFixed(0)} %</span>` : ev <= -0.05 ? `<span class="chip bad">Cote trop basse (${(ev*100).toFixed(0)} %)</span>` : `<span class="chip">À peu près juste</span>`) + (ev>0 ? kellyTxt(S.prob, cote) : '');
+});
+function comboCalc(box){
+  const c = (D.selection?.combines||[])[+box.dataset.combo]; if(!c) return;
+  const odds = [...box.querySelectorAll('[data-leg]')].map(i=>num(i.value));
+  const out = box.querySelector('.res');
+  if(odds.some(o=>!o)){ out.innerHTML = 'Tape les deux cotes « au moins 1 point ».'; return; }
+  const cote = odds[0]*odds[1], ev = c.prob*cote - 1;
+  out.innerHTML = `Cote combinée ${cote.toFixed(2)} (cote juste ${c.cote_juste}). ` + (ev > 0 ? kellyTxt(c.prob, cote).replace(' · ','') + ' ' : '') + (ev >= 0.05 ? `<span class="chip good">Valeur : +${(ev*100).toFixed(0)} % d'espérance</span>` : ev <= -0.05 ? `<span class="chip bad">Cote trop basse : ${(ev*100).toFixed(0)} % d'espérance</span>` : `<span class="chip">À peu près juste</span>`) + `<br>Chances de gagner le combiné : ${pct(c.prob)}.`;
+}
+document.addEventListener('input', e => { const box = e.target.closest('[data-combo]'); if(box && e.target.dataset.leg!=null) comboCalc(box); });
+async function wmxSave(){
+  try{ localStorage.setItem('nhl-wmx', JSON.stringify(WMX.data)); }catch(e){}
+}
+function wmxFill(){
+  document.querySelectorAll('.wmx[data-g]').forEach(box=>{
+    const v = WMX.data[box.dataset.g] || {};
+    box.querySelectorAll('input').forEach(inp=>{ if(document.activeElement!==inp) inp.value = v[inp.dataset.s] || ''; });
+    wmxCalc(box);
+  });
+}
+
+function wpCalc(){
+  const box = $('#wmx-pl'); if(!box) return; const id = $('#wp-sel').value;
+  const pl = D.players.find(p=>String(p.id)===id); const v = WMX.data['p'+id] || {};
+  box.querySelectorAll('input').forEach(inp=>{ if(document.activeElement!==inp) inp.value = v[inp.dataset.k] || ''; });
+  const M = {but:['Buteur',pl.p_but], passe:['Passeur',pl.p_passe], point:['Point',pl.p_point]};
+  const lines = Object.entries(M).map(([k,[lab,m]])=>{ const c = num(box.querySelector(`[data-k=${k}]`).value); if(!c) return '';
+    const imp = 1/c, d = m-imp; const chip = d>=0.05 ? `<span class="chip good">Valeur potentielle (+${(d*100).toFixed(0)} pts)</span>` : d<=-0.05 ? `<span class="chip bad">Cote défavorable (${(d*100).toFixed(0)} pts)</span>` : `<span class="chip">Neutre</span>`;
+    return `${lab} : implicite ${pct(imp)} vs modèle ${pct(m)} ${chip}`; }).filter(Boolean);
+  box.querySelector('.res').innerHTML = lines.length ? lines.join('<br>') + '<br>Cote implicite brute, marge du bookmaker incluse.' : `Modèle : buteur ${pct(pl.p_but)}, passeur ${pct(pl.p_passe)}, point ${pct(pl.p_point)}. Tape les cotes Winamax pour comparer.`;
+}
+function wpInit(){
+  const box = $('#wmx-pl'); if(!box) return;
+  $('#wp-sel').addEventListener('change', wpCalc);
+  box.addEventListener('input', e=>{ if(!e.target.dataset.k) return; const k='p'+$('#wp-sel').value; WMX.data[k]=WMX.data[k]||{}; WMX.data[k][e.target.dataset.k]=e.target.value.trim(); WMX.data[k].maj=Date.now(); wpCalc(); });
+  box.addEventListener('change', e=>{ if(e.target.dataset.k) wmxSave(); });
+  wpCalc();
+}
+async function wmxInit(){
+  try{ WMX.data = JSON.parse(localStorage.getItem('nhl-wmx')||'{}') || {}; }catch(e){ WMX.data = {}; }
+  wmxFill();
+  $('#panels').addEventListener('input', e=>{ const box = e.target.closest('.wmx'); if(!box || !box.dataset.g) return;
+    const g = box.dataset.g; WMX.data[g] = WMX.data[g] || {}; WMX.data[g][e.target.dataset.s] = e.target.value.trim(); WMX.data[g].maj = Date.now(); wmxCalc(box); });
+  $('#panels').addEventListener('change', e=>{ if(e.target.dataset.s) wmxSave(); });
+  try{
+    const remote = await (await fetch('api/mescotes.json',{cache:'no-store'})).json();
+    for(const [k,v] of Object.entries(remote||{})){ if(!WMX.data[k] || (v.maj||0) > (WMX.data[k].maj||0)) WMX.data[k] = v; }
+    wmxFill(); wpCalc();
+  }catch(e){}
+}
+
+// ---- Sélection du soir : les choix les plus solides, expliqués
+// ---- Les deux équipes marquent : match entier et chaque période
+function btts(){
+  const B = D.selection?.btts;
+  if(!B || !B.liste?.length) return `<div class="empty">Disponible après la prochaine analyse. Appuie sur « Lancer PRÉ-MATCH ».</div>`;
+  const bil = b => !b || !b.n ? '' : `<p class="lead">Bilan depuis le lancement : <b>${b.gagnes}/${b.n} gagnés (${pct(b.gagnes/b.n)})</b>.</p>`;
+  const S = D.selection.bilan || {};
+  const card = (c, id, titre, sous) => !c ? `<div class="empty">Aucun match à venir ce soir.</div>` : `<article class="pick" style="border-color:var(--good)"><div class="top"><div class="who"><b>${esc(c.match)}</b> <span class="sub">${esc(sous)}</span></div><span class="big">${pct(c.prob)}</span></div>
+    <div class="chips"><span class="chip good">${esc(titre)}</span><span class="chip">Cote juste ${c.cote_juste}</span><span class="chip">Jouable à partir de ${c.cote_min}</span></div>
+    <ul>${c.raisons.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>
+    <label class="sub">Cote Winamax <input inputmode="decimal" data-btts="${id}" data-p="${c.prob}" placeholder="ex. ${c.cote_min}"></label><div class="res sub" id="btts-res-${id}"></div></article>`;
+  const cell = (x, k) => { const p = x.p[k]; const top = k && k===x.meilleure; return [`<b style="${top?'color:var(--good)':''}">${pct(p)}</b><br><span class="sub">cote ${ (1/p).toFixed(2) }</span>`, p]; };
+  const rows = table([
+    ['Match', x => [`<b>${esc(x.match)}</b><br><span class="sub">${x.heure?esc(x.heure)+' · ':''}buts attendus ${x.xg_ext}–${x.xg_dom}${x.commence?' · commencé':''}</span>`, x.match]],
+    ['Match entier', x => cell(x,0), 1], ['1re', x => cell(x,1), 1], ['2e', x => cell(x,2), 1], ['3e', x => cell(x,3), 1],
+    ['Période la plus sûre', x => [['','1re','2e','3e'][x.meilleure], x.meilleure]],
+  ], B.liste);
+  const f = (B.fiab||[]).filter(x=>x.n);
+  const bt = B.backtest;
+  return `<div class="section">
+    <div class="method"><p><b>Comment je calcule.</b> Pour chaque équipe, je pars de ses buts attendus dans ce match (mon modèle mêlé à la cote du total). Je les répartis par période selon ce qu'on observe en NHL : 29 % des buts en 1re période, 35 % en 2e, 36 % en 3e. J'en déduis la chance que chacune marque au moins une fois.</p>
+    <p>Le hasard pur sous-estime « les deux marquent » : l'équipe menée pousse, puis sort son gardien. J'ai donc recalé les probabilités sur les vrais scores nhl.com, période par période. Le recalage se met à jour chaque nuit avec les nouveaux matchs. Tout est en <b>temps réglementaire</b> (60 minutes, prolongation non comptée) : vérifie que le pari Winamax a le même libellé.</p>
+    <p><b>À savoir.</b> Sur un match entier, les deux équipes marquent environ 93 % du temps, et les écarts entre matchs sont faibles : la cote est donc souvent très basse. Par période, c'est 36 à 43 %, avec de vraies différences, et la 3e période ressort presque toujours. Test sur ${bt.soirees} soirées : le match le plus sûr a gagné ${bt.match[0]} fois sur ${bt.match[1]}, la période la plus sûre ${bt.periode[0]} fois sur ${bt.periode[1]} (prévu ${pct(bt.prevu_periode)}). Une période ne vaut donc le coup que si la cote dépasse la « cote jouable ».</p></div>
+    <h2>Match le plus sûr</h2>${bil(S.btts_match)}
+    ${card(B.match, 'm', 'Les deux marquent', 'match entier, 60 minutes')}
+    <h2>Période la plus sûre</h2>${bil(S.btts_periode)}
+    ${card(B.periode, 'p', 'Les deux marquent', B.periode ? B.periode.label : '')}
+    <h2>Tous les matchs, période par période</h2>
+    <p class="lead">En vert, la période la plus sûre de chaque match. « Cote » = cote juste (sans marge) : joue seulement si Winamax propose au moins 5 % de plus.</p>
+    ${rows}
+    ${f.length?`<h2>Fiabilité mesurée</h2><p class="lead">Ce que j'avais annoncé en moyenne contre ce qui s'est vraiment passé, sur ${f[0].n} matchs notés :</p><ul>${f.map(x=>`<li>${esc(x.label)} : annoncé ${pct(x.prevu)}, réel ${pct(x.reel)}</li>`).join('')}</ul>`:''}
+  </div>`;
+}
+document.addEventListener('input', e => {
+  const id = e.target.dataset.btts; if(id===undefined) return;
+  const p = +e.target.dataset.p, c = num(e.target.value), out = $('#btts-res-'+id); if(!c){ out.innerHTML=''; return; }
+  const ev = p*c-1;
+  out.innerHTML = (ev >= 0.05 ? `<span class="chip good">Valeur : +${(ev*100).toFixed(0)} %</span>` : ev <= -0.05 ? `<span class="chip bad">Cote trop basse (${(ev*100).toFixed(0)} %)</span>` : `<span class="chip">À peu près juste (${ev>=0?'+':''}${(ev*100).toFixed(0)} %)</span>`) + (ev>0 ? kellyTxt(p, c) : '');
+});
+
+function selec(){
+  const S = D.selection;
+  if(!S) return `<div class="empty">Sélection disponible après la prochaine analyse. Appuie sur « Lancer PRÉ-MATCH ».</div>`;
+  const prov = D.games.some(g=>g.lineups && g.lineups.status==='non disponibles');
+  const fiabChip = f => `<span class="chip ${f>=70?'good':f>=55?'warn':'bad'}">Fiabilité ${f}/100</span>`;
+  const card = (p,i,key,lab) => `<article class="pick"><div class="top"><span class="rank">${i+1}</span><div class="who"><b>${esc(p.nom)}</b> <span class="sub">${esc(p.equipe)} contre ${esc(p.opp)} · ${esc(p.pos)}${p.ligne&&p.ligne!=='non disponible'?' · '+esc(p.ligne):''}</span></div><span class="big">${pct(p.prob)}</span></div>
+    <div class="chips">${p.niveau==='Choix sûr'?'<span class="chip good">Choix sûr</span>':p.niveau?'<span class="chip">Complément</span>':''}<span class="chip">${lab}</span>${fiabChip(p.fiabilite)}${key==='p_point'?`<span class="chip">But ${pct(p.p_but)}</span>`:`<span class="chip">Point ${pct(p.p_point)}</span>`}</div>
+    <ul>${p.raisons.map(r=>`<li>${esc(r)}</li>`).join('')}</ul></article>`;
+  const team = (t,i) => `<article class="pick"><div class="top"><span class="rank">${i+1}</span><div class="who"><b>${esc(t.equipe)}</b> <span class="sub">contre ${esc(t.adversaire)} · ${esc(t.match)}</span></div><span class="big">${pct(t.prob)}</span></div>
+    <div class="chips">${t.solide?'<span class="chip good">Signal solide</span>':'<span class="chip warn">À confirmer</span>'}<span class="chip">Confiance ${esc(t.confiance)}</span>${t.cote?`<span class="chip">Cote ${t.cote}</span>`:''}</div>
+    <ul>${t.raisons.map(r=>`<li>${esc(r)}</li>`).join('')}</ul></article>`;
+  const bil = b => !b || !b.n ? '' : `<p class="lead">Bilan depuis le début : <b>${b.gagnes}/${b.n} gagnés (${pct(b.gagnes/b.n)})</b>${b.sur_n ? ` · Choix sûrs : <b>${b.sur_gagnes}/${b.sur_n} (${pct(b.sur_gagnes/b.sur_n)})</b>` : ''}.</p>`;
+  const mini = (p) => `<li><b>${esc(p.nom)}</b> (${esc(p.equipe)}, ${esc(p.match)}) : ${esc(p.lecture)} Probabilité retenue : but ${pct(p.p_but)}, point ${pct(p.p_point)}.</li>`;
+  return `<div class="section">
+    <div class="bank"><label for="bankroll">Ma bankroll (€)</label><input id="bankroll" inputmode="decimal" placeholder="ex. 200"><span class="sub">Sert à calculer les mises conseillées (quart de Kelly, plafonné à 2 % par pari). Gardé sur cet appareil.</span></div>
+    <div class="method"><p><b>Comment je choisis.</b> Une série ne rend pas un but moins probable : chaque match repart de zéro. Ce qui compte, c'est <b>pourquoi</b> un joueur marque. Je juge donc d'abord son volume de tirs, qui est un signal stable, puis sa réussite au tir, que je ramène vers sa moyenne de carrière parce qu'elle varie surtout par chance.</p>
+    <p>Résultat : un joueur qui marque à chaque match avec une réussite anormale n'est pas suivi aveuglément (« série flatteuse »). Un joueur qui tire beaucoup sans marquer est revalorisé (« malchanceux »). J'écarte aussi les joueurs incertains, ceux qui ont trop peu de matchs ou un temps de glace trop faible, et je prends au maximum 2 joueurs par équipe et 3 par match, pour qu'un match fermé ne fasse pas tout tomber.</p>
+    <p><b>Choix sûr</b> : probabilité d'au moins 62 %, au moins 2 min 30 d'avantage numérique par match, gros temps de glace et un seul joueur par équipe. Sur l'historique, ces critères ont réussi nettement plus souvent que le reste (71 % contre 63 % à probabilité égale). Les autres choix sont des <b>compléments</b>, moins sûrs. Je compte aussi la faiblesse de l'adversaire en désavantage numérique et la régularité du joueur (points étalés ou groupés).</p>
+    ${prov?'<p><b>Provisoire :</b> certaines compositions nhl.com ne sont pas encore publiées. La PRÉ-MATCH du soir affinera la sélection.</p>':''}</div>
+    <h2>5 joueurs les plus probables de faire un point</h2>${bil(S.bilan?.point)}
+    ${S.points.length?`<div class="picks">${S.points.map((p,i)=>card(p,i,'p_point','Au moins 1 point')).join('')}</div>`:'<div class="empty">Aucun joueur ne passe les filtres de fiabilité ce soir.</div>'}
+    <h2>Pari safe du jour</h2>${bil(S.bilan?.safe)}
+    ${S.safe ? `<article class="pick" style="border-color:var(--good)" id="safe-card"><div class="top"><div class="who"><b style="font-size:1.4rem">Cote ${S.safe.cote}</b> <span class="sub">${S.safe.legs.length} paris, un par match</span></div><span class="big">${pct(S.safe.prob)}</span></div>
+      <div class="chips"><span class="chip good">Pari safe</span><span class="chip">Cote juste ${S.safe.cote_juste}</span>${S.safe.ev!=null?`<span class="chip ${S.safe.ev>0?'good':''}">Espérance ${S.safe.ev>0?'+':''}${Math.round(S.safe.ev*100)} %</span>`:''}${S.safe.provisoire?'<span class="chip warn">Cotes du soir pas encore publiées : provisoire</span>':''}</div>
+      <p class="sub" style="margin:0">Construit comme un ticket Winamax : des victoires d'équipe où mes favoris gagnent 65 % du temps, plus des points de joueurs parmi mes « choix sûrs » (72 % de réussite). Sur les 12 dernières soirées, ce ticket serait passé 5 fois (42 %) pour une cote moyenne de 3,3. Il perd plus souvent qu'il ne gagne : c'est la cote qui le rend intéressant.</p>
+      ${S.safe.legs.map((l,i)=>`<div class="wmx"><div class="top"><b>${esc(l.label)}</b><span class="sub">${esc(l.match)} · mes chances ${pct(l.prob)} · cote ${l.cote}${l.marche?'':' (estimée)'}</span></div>
+        ${(l.why||[]).length?`<ul class="logic">${l.why.map(w=>`<li>${esc(w)}</li>`).join('')}</ul>`:''}
+        <label>Cote Winamax<input inputmode="decimal" data-safe="${i}" placeholder="ex. ${l.cote}"></label></div>`).join('')}
+      <div class="res sub" id="safe-res">Tape les cotes Winamax pour voir la cote réelle du ticket, son espérance et la mise conseillée.</div></article>` : '<div class="empty">Pas de ticket safe ce soir : pas assez de favoris et de joueurs sûrs dans des matchs différents.</div>'}
+    <h2>Buteur du soir</h2>${bil(S.bilan?.buteur)}
+    ${S.buteur ? (()=>{ const b = S.buteur, j = b.joueur, e = b.equipe_info, o = b.adversaire;
+      return `<article class="pick" style="border-color:var(--accent)"><div class="top"><div class="who"><b style="font-size:1.5rem">${esc(b.nom)}</b> <span class="sub">${esc(b.equipe)} contre ${esc(b.opp)} · ${esc(b.debut)} (Paris)</span></div><span class="big">${pct(b.p_but)}</span></div>
+      <div class="chips"><span class="chip good">Marque au moins 1 but</span><span class="chip">Cote juste ${b.cote_juste}</span><span class="chip">Au moins 1 point : ${pct(b.p_point)}</span></div>
+      <p class="sub" style="margin:0">${esc(b.verdict)} Avant cette fiche, mon buteur n°1 de la soirée avait marqué 12 fois sur 27 (44 %) : un buteur n'est jamais « sûr ». À jouer seulement si Winamax paie plus de ${b.cote_juste}.</p>
+      <div class="lines">
+        <div class="col"><h4>Le joueur</h4><ul class="logic">
+          <li>${esc(j.ligne)}${j.partenaires.length?` avec ${esc(j.partenaires.join(' et '))}`:''} · ${esc(j.toi)} de glace${j.toi_recent?` (récemment ${esc(j.toi_recent)})`:''}${j.toi_an?`, dont ${esc(j.toi_an)} en avantage numérique`:''}</li>
+          <li>${esc(j.buts)}</li><li>${esc(j.saison_prec)}</li><li>${esc(j.dix_derniers)}</li><li>${esc(j.tirs)} · ${esc(j.reussite)}</li>
+          ${j.sequence && j.sequence!=='-'?`<li>${esc(j.sequence)}</li>`:''}<li>Contre ${esc(b.opp)} : ${esc(j.vs_adv)}</li>${j.lecture?`<li>${esc(j.lecture)}</li>`:''}</ul></div>
+        <div class="col"><h4>${esc(e.nom)}</h4><ul class="logic"><li>Bilan ${esc(e.bilan)}, ${esc(e.forme)} sur 10 matchs</li><li>${e.bp ?? '—'} buts marqués par match · avantage numérique ${e.an ?? '—'} %</li><li>Buts attendus ce soir : <b>${e.xg_ce_soir}</b>${e.total_marche?` (total du marché : ${e.total_marche})`:''}</li></ul>
+          <h4>${esc(o.nom)}</h4><ul class="logic"><li>Bilan ${esc(o.bilan)}, ${esc(o.forme)} sur 10 matchs</li><li>${o.bc ?? '—'} buts encaissés et ${o.tirs_contre ?? '—'} tirs concédés par match · désavantage numérique ${o.dn ?? '—'} %</li><li>Gardien : ${esc(o.gardien)} (${esc(o.gardien_statut)})${o.gardien_sv!=null?`, ${o.gardien_sv} d'arrêts cette saison`:''}${o.gardien_sv_prec!=null?`, ${o.gardien_sv_prec} la saison dernière`:''}</li></ul></div>
+      </div>
+      ${b.atouts.length?`<div><b>Atouts</b><ul class="logic">${b.atouts.map(a=>`<li>${esc(a)}</li>`).join('')}</ul></div>`:''}
+      ${b.risques.length?`<div><b>Risques</b><ul class="logic">${b.risques.map(a=>`<li>${esc(a)}</li>`).join('')}</ul></div>`:''}
+      ${b.autres.length?`<div class="sub">Juste derrière : ${b.autres.map(a=>`${esc(a.nom)} (${esc(a.equipe)}, ${pct(a.p_but)})`).join(' · ')}</div>`:''}
+      <div class="wmx"><label>Cote Winamax « buteur »<input inputmode="decimal" id="bt-cote" placeholder="ex. 2,40"></label><div class="res sub" id="bt-res"></div></div></article>`; })() : '<div class="empty">Pas de buteur assez fiable ce soir.</div>'}
+    <h2>Meilleurs paris à cote 2 ou plus</h2>${bil(S.bilan?.cote2)}
+    <p class="lead">Seulement les paris où la cote affichée par nhl.com (DraftKings) paie plus que ce que vaut le pari selon moi. L'espérance est le gain moyen par euro misé sur la durée. Gagner moins d'une fois sur deux est normal à ces cotes : c'est la cote qui compense.</p>
+    ${(S.cote2||[]).length ? table([['Pari',c=>[`<b>${esc(c.label)}</b> <span class="sub">${esc(c.match)}</span>`,c.label]],['Cote',c=>[c.cote,c.cote],1],['Mes chances',c=>[pct(c.prob),c.prob],1],['Cote juste',c=>[c.cote_juste,c.cote_juste],1],['Espérance',c=>[`<span class="chip good">+${Math.round(c.ev*100)} %</span>`,c.ev],1],['Mise conseillée',c=>[kellyTxt(c.prob,c.cote).replace(' · Mise conseillée : ','')||'—',c.ev],1]], S.cote2) : '<div class="empty">Aucune cote de 2 ou plus n’a de valeur ce soir (ou les cotes ne sont pas encore publiées). Ne pas forcer.</div>'}
+    ${(S.cote2j||[]).length ? `<p class="lead">Côté joueurs (pas de cote publiée par nhl.com) : à jouer seulement si Winamax paie au moins la cote juste.</p><ul class="logic">${S.cote2j.map(l=>`<li><b>${esc(l.label)}</b> (${esc(l.match)}) : ${pct(l.prob)}, cote juste ${l.cote}</li>`).join('')}</ul>` : ''}
+    <h2>Pari fun du soir</h2>${bil(S.bilan?.fun)}
+    <p class="lead">Pour le plaisir et le risque assumé. Quatre paris à thème : des buteurs, des victoires avec un buteur, un mélange (point, buteur, victoire, au plus un total de buts), et le « Méga points » : le joueur le plus sûr de chaque match, plus un 2e de l'autre équipe s'il dépasse 72 %. Plus il y a de matchs, plus il y a de joueurs, et plus les chances baissent (environ 7 % avec 9 joueurs à 75 %, moins de 1 % avec 18). Ça reste un pari qui perd la plupart du temps : petite mise seulement (1 % de ta bankroll au maximum).</p>
+    ${(S.fun||[]).length ? `<div class="picks">${S.fun.map(f=>`<article class="pick"><div class="top"><div class="who"><b>${esc(f.theme || ('Cote '+f.cible+'+'))} : cote ${f.cote}</b> <span class="sub">${f.legs.length} paris combinés</span></div><span class="big">${pct(f.prob)}</span></div>
+      <div class="chips"><span class="chip warn">Risqué</span><span class="chip">Chance de gagner : environ 1 sur ${Math.round(1/f.prob)}</span><span class="chip">Cote juste ${f.cote_juste}</span></div>
+      <ul>${f.legs.map(l=>`<li>${esc(l.label)} <span class="sub">(${esc(l.match)}) ${pct(l.prob)} · cote ${l.cote}${l.marche?'':' juste'}</span></li>`).join('')}</ul>
+      <div class="sub">Cote calculée avec les cotes nhl.com pour les équipes et les cotes justes pour les joueurs : chez Winamax, le combiné paiera un peu moins. Vérifie qu'il dépasse ${f.cote_juste}.</div></article>`).join('')}</div>` : '<div class="empty">Pas assez de paris solides ce soir pour construire un pari fun.</div>'}
+    <h2>Les 5 meilleurs parieurs Covers</h2>${bil(S.bilan?.top5)}
+    <p class="lead">Classés par la solidité de leur historique (borne basse de leur taux de réussite, au moins 40 paris), pas par leurs gains bruts. Sur ${S.top5?.n_classes||'des milliers de'} parieurs classés, le meilleur dépasse naturellement un score z de ${S.top5?.seuil_chance??'3,8'} par pure chance : en dessous, ce peut être de la chance. Je note chacun de leurs paris pour mesurer moi-même s'ils gagnent vraiment.</p>
+    ${(S.top5?.parieurs||[]).length ? `<div class="picks">${S.top5.parieurs.map(b=>`<article class="pick"><div class="top"><span class="rank">${b.rang}</span><div class="who"><b>${esc(b.nom)}</b> <span class="sub">${esc(b.record)} · ${pct(b.taux)} de réussite${b.unites!=null?` · ${b.unites>0?'+':''}${b.unites} unités`:''}</span></div><span class="big">${pct(b.borne_basse)}</span></div>
+      <div class="chips">${b.au_dela_chance?'<span class="chip good">Au-delà de la chance</span>':'<span class="chip warn">Peut-être de la chance</span>'}<span class="chip">Score z ${b.z}</span><span class="chip">${b.mesure.n?`Mesuré par moi : ${b.mesure.gagnes}/${b.mesure.n} (${pct(b.mesure.gagnes/b.mesure.n)})`:'Mesuré par moi : pas encore de pari noté'}</span></div>
+      <p class="sub" style="margin:0">Le grand pourcentage est son taux de réussite minimum avec 95 % de confiance.</p>
+      ${b.paris.length?`<ul>${b.paris.map(a=>`<li><b>${esc(a.pari)}</b> <span class="sub">(${esc(a.match)}${a.cote?`, cote ${a.cote}`:''}${a.commence?', commencé':''})</span> : ${esc(a.avis)}${a.ev!=null?` Espérance ${a.ev>0?'+':''}${Math.round(a.ev*100)} %.`:''}</li>`).join('')}</ul>`:'<p class="sub" style="margin:0">Pas de pari publié pour ce soir.</p>'}
+      <a class="sub" href="${esc(b.url)}" target="_blank" rel="noopener">Voir son profil Covers</a></article>`).join('')}</div>` : '<div class="empty">Classement covers.com non disponible pour le moment.</div>'}
+    <h2>Top paris OLBG</h2>${bil(S.bilan?.olbg_top)}
+    <p class="lead">OLBG.com est une communauté britannique de pronostiqueurs : la plateforme enregistre leurs résultats sur 12 mois (gains calculés sur une mise de 10 points). Voici les choix où au moins 5 tipsters votent et 70 % ou plus sont d'accord, classés par mes chances. À vérifier : je note chacun de ces paris pour mesurer leur vraie valeur.</p>
+    ${(S.olbg?.top||[]).length ? `<div class="picks">${S.olbg.top.map((c,i)=>`<article class="pick"><div class="top"><span class="rank">${i+1}</span><div class="who"><b>${esc(c.label)}</b> <span class="sub">${esc(c.match)} · ${esc(c.market)}</span></div><span class="big">${c.notre!=null?pct(c.notre):'—'}</span></div>
+      <div class="chips"><span class="chip">${c.n}/${c.total} tipsters (${pct(c.pct)})</span>${c.notre!=null?(c.notre>=0.5?'<span class="chip good">Je suis d’accord</span>':'<span class="chip bad">Je ne suis pas d’accord</span>'):''}${c.cote?`<span class="chip">Cote ${c.cote}</span>`:''}${c.ev!=null?`<span class="chip ${c.ev>0?'good':'bad'}">Espérance ${c.ev>0?'+':''}${Math.round(c.ev*100)} %</span>`:''}</div>
+      <p class="sub" style="margin:0">${esc(c.avis)}</p></article>`).join('')}</div>` : `<div class="empty">${S.olbg?.ok===false?'olbg.com non disponible pour le moment.':'Pas de consensus fort chez les tipsters OLBG ce soir.'}</div>`}
+    <h2>Meilleur tipster OLBG de chaque match</h2>${bil(S.bilan?.olbg_best)}
+    ${(S.olbg?.matchs||[]).length ? table([
+      ['Match', m=>[`<b>${esc(m.match)}</b>${m.commence?' <span class="sub">commencé</span>':''}<br><a class="sub" href="${esc(m.url)}" target="_blank" rel="noopener">voir sur OLBG</a>`, m.match]],
+      ['Choix le plus suivi', m=>[m.populaire?`${esc(m.populaire.label)}<br><span class="sub">${m.populaire.n}/${m.populaire.total} tipsters · moi ${pct(m.populaire.notre)}</span>`:'—', m.populaire?.pct??0]],
+      ['Meilleur tipster', m=>[m.best?`<b>${esc(m.best.tipster)}</b><br><span class="sub">12 mois : ${m.best.profit>0?'+':''}${m.best.profit} pts, ${m.best.strike??'—'} % gagnés · 30 j : ${m.best.p30??'—'}</span>`:'—', m.best?.profit??-999]],
+      ['Son pari', m=>[m.best?esc(m.best.label):'—', m.best?.label||'']],
+      ['Mes chances', m=>[m.best?P(m.best.notre,.55,.45):'—', m.best?.notre??-1], 1],
+      ['Mon avis', m=>[m.best?esc(m.best.avis):'', 0, 'wrapcell']],
+    ], S.olbg.matchs) : ''}
+    <h2>2 paris d'autres parieurs</h2>${bil(S.bilan?.autres)}
+    <p class="lead">Les paris du soir des meilleurs parieurs Covers. Leur historique est enregistré par la plateforme, pas déclaré par eux. Je les classe par la solidité de leur historique (borne basse de leur taux de réussite), pas par leurs gains bruts. Attention : parmi ${S.autres?.n_classes || 'des milliers de'} parieurs classés, le meilleur a forcément l'air brillant par pur hasard. Il faut un score z d'au moins ${S.autres?.seuil_chance ?? '3,8'} pour dépasser la chance. Je suis aussi leurs paris ici pour vérifier moi-même.</p>
+    ${(S.autres?.paris||[]).length ? `<div class="picks">${S.autres.paris.map(a=>`<article class="pick"><div class="top"><div class="who"><b>${esc(a.pari)}</b> <span class="sub">${esc(a.match)}</span></div>${a.notre!=null?`<span class="big">${pct(a.notre)}</span>`:''}</div>
+      <div class="chips"><span class="chip">Parieur : ${esc(a.parieur.nom)}</span><span class="chip">${esc(a.parieur.record)} (${pct(a.parieur.taux)})</span>${a.parieur.au_dela_chance?'<span class="chip good">Au-delà de la chance</span>':'<span class="chip warn">Peut être de la chance</span>'}${a.notre!=null?(a.notre>=0.5?'<span class="chip good">Je suis d’accord</span>':'<span class="chip bad">Je ne suis pas d’accord</span>'):''}</div>
+      <ul><li>${esc(a.avis)}</li><li>Historique : ${a.parieur.record}, réussite ${pct(a.parieur.taux)}, au minimum ${pct(a.parieur.borne_basse)} avec 95 % de confiance (score z ${a.parieur.z}).</li>${a.ev!=null?`<li>Espérance à cette cote selon moi : ${a.ev>0?'+':''}${Math.round(a.ev*100)} %.</li>`:''}</ul>
+      <a class="sub" href="${esc(a.parieur.url)}" target="_blank" rel="noopener">Voir son profil Covers</a></article>`).join('')}</div>` : '<div class="empty">Les meilleurs parieurs n’ont pas encore publié leurs paris de ce soir.</div>'}
+    <h2>Accord avec les autres parieurs</h2>
+    <p class="lead">Mon favori et celui des leaders Covers. Leur avis ne modifie mes chances qu'une fois prouvé sur au moins 30 matchs (onglet Apprentissage) ; avant ça, l'accord sert seulement d'indice.</p>
+    ${(S.accord||[]).length ? table([['Match',a=>[esc(a.match),a.match]],['Mon favori',a=>[`<b>${esc(a.equipe)}</b>`,a.equipe]],['Leaders (ext–dom)',a=>[esc(a.leaders),a.leaders]],['Public (ext–dom)',a=>[esc(a.public||'—'),a.public]],['Accord',a=>[a.accord?'<span class="chip good">D\'accord</span>':'<span class="chip bad">Désaccord</span>',a.accord?1:0]],['Mes chances',a=>[pct(a.prob),a.prob],1],['Chances mixtes',a=>[pct(a.prob_mixte),a.prob_mixte],1],['Poids des leaders',a=>[esc(a.poids),a.poids]]], S.accord) : '<div class="empty">Pas de données Covers ce soir.</div>'}
+    <h2>Combiné de 2 joueurs (cote visée ≈ 2)</h2>${bil(S.bilan?.combine)}
+    <div class="method"><p>Une cote de 2 correspond à <b>50 % de chances</b>. Un combiné de deux joueurs à 75 % passe environ 56 % du temps (0,75 × 0,75) : il gagne un peu plus d'une fois sur deux, jamais 8 fois sur 10. Il ne vaut le coup que si la cote combinée de ton bookmaker dépasse la <b>cote juste</b> ci-dessous. Tape les cotes Winamax des deux joueurs pour le vérifier.</p></div>
+    ${(S.combines||[]).length ? `<div class="picks">${S.combines.map((c,i)=>`<article class="pick" data-combo="${i}"><div class="top"><span class="rank">${i+1}</span><div class="who"><b>${c.joueurs.map(j=>esc(j.nom)).join(' + ')}</b> <span class="sub">${c.joueurs.map(j=>`${esc(j.equipe)} contre ${esc(j.opp)}`).join(' · ')}</span></div><span class="big">${pct(c.prob)}</span></div>
+      <div class="chips">${c.deux_surs?'<span class="chip good">2 choix sûrs</span>':'<span class="chip warn">Contient un complément</span>'}<span class="chip">Cote juste ${c.cote_juste}</span>${c.joueurs.map(j=>`<span class="chip">${esc(j.nom.split(' ').slice(-1)[0])} ${pct(j.prob)}</span>`).join('')}</div>
+      <div class="wmx"><div class="row">${c.joueurs.map((j,k)=>`<label>Cote Winamax ${esc(j.nom.split(' ').slice(-1)[0])}<input inputmode="decimal" data-leg="${k}" placeholder="ex. 1,42"></label>`).join('')}</div><div class="res sub">Tape les deux cotes « au moins 1 point ».</div></div></article>`).join('')}</div>` : '<div class="empty">Pas de combiné possible ce soir : il faut deux bons joueurs dans deux matchs différents.</div>'}
+    <h2>Coups ambitieux : 2 points ou 2 buts</h2>${bil(S.bilan?.deux_points)}
+    <p class="lead">Moins probables, mieux payés. Je les ai vérifiés sur les feuilles de match passées : les « 2 points ou plus » annoncés vers 38 % ont réussi 36 à 37 % du temps. Tape la cote Winamax : ce pari ne vaut le coup que si elle dépasse la cote juste.</p>
+    ${(S.deux_points||[]).length || (S.deux_buts||[]).length ? `<div class="picks">${[...(S.deux_points||[]), ...(S.deux_buts||[])].map((p,i)=>`<article class="pick" data-amb="${i}"><div class="top"><div class="who"><b>${esc(p.nom)}</b> <span class="sub">${esc(p.equipe)} contre ${esc(p.opp)}</span></div><span class="big">${pct(p.prob)}</span></div>
+      <div class="chips"><span class="chip warn">${esc(p.pari)}</span><span class="chip">Cote juste ${p.cote_juste}</span></div><ul>${p.raisons.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>
+      <div class="wmx"><label>Cote Winamax<input inputmode="decimal" data-ambc placeholder="ex. 3,40"></label><div class="res sub"></div></div></article>`).join('')}</div>` : '<div class="empty">Rien de solide ce soir.</div>'}
+    <h2>Objectif 80 % : tirs cadrés</h2>${bil(S.bilan?.tirs)}
+    <p class="lead">Pour viser 8 réussites sur 10, le marché des tirs cadrés est plus adapté que le point : un gros tireur qui prend 4 à 5 tirs par match en cadre au moins 2 ou 3 presque à chaque fois. Je ne montre que les joueurs à 80 % ou plus (85 % pour « 2 tirs et plus »), un seul par équipe. Vérifie que ton bookmaker propose ce pari.</p>
+    ${(S.tirs||[]).length ? `<div class="picks">${S.tirs.map((t,i)=>`<article class="pick"><div class="top"><span class="rank">${i+1}</span><div class="who"><b>${esc(t.nom)}</b> <span class="sub">${esc(t.equipe)} contre ${esc(t.opp)} · ${esc(t.pos)}</span></div><span class="big">${pct(t.prob)}</span></div>
+      <div class="chips"><span class="chip good">Au moins ${t.seuil} tirs cadrés</span></div><ul>${t.raisons.map(r=>`<li>${esc(r)}</li>`).join('')}</ul></article>`).join('')}</div>` : '<div class="empty">Aucun joueur n’atteint 80 % ce soir. Dans ce cas, mieux vaut ne rien forcer.</div>'}
+    <h2>5 buteurs les plus probables</h2>${bil(S.bilan?.but)}
+    ${S.buts.length?`<div class="picks">${S.buts.map((p,i)=>card(p,i,'p_but','Au moins 1 but')).join('')}</div>`:'<div class="empty">Aucun joueur ne passe les filtres de fiabilité ce soir.</div>'}
+    <h2>Équipes les plus sûres</h2>${bil(S.bilan?.equipe)}
+    ${S.equipes.length?`<div class="picks">${S.equipes.map(team).join('')}</div>`:'<div class="empty">Aucun match à venir ce soir.</div>'}
+    <div class="lines">
+      <div class="col"><h2>Séries trompeuses</h2><p class="lead">Ils marquent plus que leurs tirs ne le justifient. Ne pas les choisir pour leur série.</p>${(S.pieges||[]).length?`<ul class="logic">${S.pieges.map(mini).join('')}</ul>`:'<div class="sub">Aucune ce soir.</div>'}</div>
+      <div class="col"><h2>Malchanceux à surveiller</h2><p class="lead">Beaucoup de tirs, peu de buts : statistiquement, la réussite revient.</p>${(S.relance||[]).length?`<ul class="logic">${S.relance.map(mini).join('')}</ul>`:'<div class="sub">Aucun ce soir.</div>'}</div>
+    </div>
+  </div>`;
+}
+
+
+// ---- Après-match : ce qui a marché, ce qui a raté, et pourquoi
+function apres(){
+  const A = D.apres;
+  if(!A || !(A.equipes||[]).length) return `<div class="empty">Pas encore d'après-match pour la soirée du ${frDate(D.meta.veille)}. Il se remplit à la MISE À JOUR du matin.</div>`;
+  const games = [...new Set(A.equipes.map(t=>t.game_id))];
+  const causeChip = c => `<span class="chip ${c==='Réussi'?'good':c==='Équipe muselée'?'warn':c==='Temps de glace réduit'||c==='N’a pas joué'?'bad':''}">${esc(c)}</span>`;
+  const mmss = s => s==null ? 'n.d.' : `${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,'0')}`;
+  const tot = A.causes_30j.reduce((s,c)=>s+c.n,0);
+  return `<div class="section">
+    <div class="summary"><b>Soirée du ${frDate(A.date)} :</b> ${A.hauts.n ? `${A.hauts.reussis} sur ${A.hauts.n} joueurs annoncés à 60 % ou plus ont fait un point (${pct(A.hauts.reussis/A.hauts.n)}). Pour être juste, une série de prédictions à 65 % doit réussir environ 2 fois sur 3, et pas à chaque fois.` : 'aucun joueur annoncé à 60 % ou plus.'}</div>
+    ${games.map(gid => {
+      const T = A.equipes.filter(t=>t.game_id===gid);
+      const J = A.joueurs.filter(x=>x.game_id===gid).sort((a,b)=>b.prob-a.prob);
+      return `<article class="game"><div class="hd"><b style="color:var(--fg)">${T.map(t=>`${t.equipe} ${t.buts}`).join(' – ')}</b><span>buts attendus ${T.map(t=>t.xg).join(' – ')}</span></div>
+        <div class="sub">${T.map(t=>`${t.equipe} : ${t.buts} but(s) pour ${t.xg} attendus, ${t.tirs ?? '?'} tirs${t.sv_adv!=null?`, gardien adverse ${Number(t.sv_adv).toFixed(3)} d'arrêts`:''}${t.buts <= t.xg-1.5 ? ' : <b>muselée</b>' : t.buts >= t.xg+1.5 ? ' : <b>a explosé</b>' : ''}`).join('<br>')}</div>
+        ${J.length?table([['Joueur',x=>[`<b>${esc(x.nom)}</b> <span class="sub">${esc(x.equipe)}</span>`,x.nom]],['P(point)',x=>[P(x.prob,.6,.45),x.prob],1],['Résultat',x=>[x.res===1?'<span class="chip good">Point</span>':x.res===0?'<span class="chip bad">0 point</span>':'<span class="chip">N/J</span>',x.res]],
+          ['Temps de glace',x=>[`${mmss(x.toi)} <span class="sub">/ ${mmss(x.toi_exp)}</span>`,x.toi],1],['Tirs',x=>[`${x.tirs ?? '?'} <span class="sub">/ ${x.tirs_exp ?? '?'}</span>`,x.tirs],1],['Cause',x=>[causeChip(x.cause),x.cause]]], J):''}
+      </article>`; }).join('')}
+    <h2>Pourquoi les points probables ratent (30 derniers jours)</h2>
+    ${tot ? `<div class="chart">${A.causes_30j.map(c=>`<div style="display:grid;grid-template-columns:minmax(120px,30%) 1fr 48px;gap:8px;align-items:center;margin:4px 0;font-size:.84rem"><span>${esc(c.cause)}</span><span style="background:var(--surface-2);border-radius:3px;height:14px;display:block"><span style="display:block;height:14px;border-radius:3px;background:${c.cause==='Équipe muselée'?'var(--warn)':'var(--accent)'};width:${Math.round(c.part*100)}%"></span></span><b style="text-align:right">${Math.round(c.part*100)} %</b></div>`).join('')}<div class="sub">${tot} points manqués à 50 % ou plus. « Équipe muselée » : l'équipe a marqué 1 but ou moins, ou 1,5 de moins que prévu. « Pas impliqué » : l'équipe a marqué normalement, mais pas avec lui. Toi / prévu = temps de glace et tirs réels / attendus.</div></div>` : '<div class="empty">Pas encore assez de matchs analysés.</div>'}
+    <p class="lead">Chaque après-match est gardé en mémoire (120 jours pour les joueurs, 180 pour les équipes). Il sert à réajuster le calcul : l'échelle des buts attendus, la dispersion des points (soirs « à paquets ») et le poids du temps de glace récent. Les ajustements apparaissent dans l'onglet Apprentissage.</p>
+  </div>`;
+}
+
+// ---- Mes paris suivis : cotes 2+, combinés, paris fun, paris d'autres parieurs
+function suivi(){
+  const S = D.paris_suivis;
+  if(!S || !(S.paris||[]).length) return '<div class="empty">Aucun pari suivi pour l’instant.</div>';
+  const money = v => v==null?'—':`<b style="color:var(${v>0?'--good':v<0?'--bad':'--fg'})">${v>0?'+':''}${Number(v).toFixed(2)} u</b>`;
+  const types = ['Tous', ...new Set(S.paris.map(p=>p.type))];
+  return `<div class="section">
+    <p class="lead">Tous les paris à cote 2 et plus, les combinés, les paris fun et les paris d'autres parieurs proposés depuis le début. Le gain est calculé avec une mise fixe d'1 unité par pari (1 u = la mise de ton choix, par exemple 1 €). Pour les combinés de 2 joueurs, c'est la cote juste qui sert de cote, car nhl.com ne publie pas de cotes joueurs.</p>
+    ${table([['Type',b=>[`<b>${esc(b.type)}</b>`,b.type]],['Évalués',b=>[b.n,b.n],1],['Gagnés',b=>[b.n?`${b.gagnes}/${b.n} (${pct(b.gagnes/b.n)})`:'—',b.n?b.gagnes/b.n:-1],1],['En attente',b=>[b.en_attente,b.en_attente],1],['Gain cumulé',b=>[money(b.profit),b.profit??0],1],['Rendement',b=>[b.roi==null?'—':`${b.roi>0?'+':''}${Math.round(b.roi*100)} %`,b.roi??0],1]], S.bilan)}
+    <div class="controls"><label for="f-suivi">Afficher</label><select id="f-suivi">${types.map(t=>`<option>${esc(t)}</option>`).join('')}</select></div>
+    <div id="suivi-list">${suiviList(S.paris, 'Tous')}</div>
+  </div>`;
+}
+function suiviList(rows, t){
+  const resChip = r => r===1?'<span class="chip good">Gagné</span>':r===0?'<span class="chip bad">Perdu</span>':r==='N/J'?'<span class="chip">Annulé</span>':'<span class="chip">En attente</span>';
+  const legMark = r => r===1?'<span style="color:var(--good)">✓</span>':r===0?'<span style="color:var(--bad)">✗</span>':'<span class="sub">·</span>';
+  const list = rows.filter(p => t==='Tous' || p.type===t);
+  return `<div class="picks">${list.map(p=>`<article class="pick"><div class="top"><div class="who"><b>${esc(p.type)}</b> <span class="sub">${frDate(p.date)}</span></div><span class="big">${p.cote ? p.cote : '—'}</span></div>
+    <div class="chips">${resChip(p.resultat)}${p.prob!=null?`<span class="chip">Mes chances ${pct(p.prob)}</span>`:''}${p.cote_juste?'<span class="chip">Cote juste</span>':''}${p.gain!=null?`<span class="chip ${p.gain>0?'good':'bad'}">${p.gain>0?'+':''}${p.gain.toFixed(2)} u</span>`:''}</div>
+    <ul>${p.jambes.map(j=>`<li>${legMark(j.res)} ${esc(j.label)}${j.match?` <span class="sub">(${esc(j.score || j.match)})</span>`:''}</li>`).join('')}</ul></article>`).join('')}</div>`;
+}
+document.addEventListener('change', e => { if(e.target.id==='f-suivi'){ $('#suivi-list').innerHTML = suiviList(D.paris_suivis.paris, e.target.value); } });
+
+// ---- Apprentissage : journal critique quotidien
+function appr(){
+  const L = D.learning || {}; const P = L.params || {}; const PR = L.priors || {};
+  const fmtP = (k,v) => v==null ? '—' : ['home','b2b','inj','h2h','form','vthr'].includes(k) ? (v*100).toFixed(1)+' %' : ['wm','wt','wi'].includes(k) ? Math.round(v*100)+' %' : Number(v).toFixed(2);
+  const rows = Object.keys(PR).map(k => ({k, label: PR[k].label, v: P[k], d: PR[k].v}));
+  const J = L.journal || [];
+  const m = (J[0] || {}).metrics || {};
+  const metric = (lab, v, hint) => `<div><span>${lab}</span><b>${v==null?'—':v}${hint?` <span class="sub">${hint}</span>`:''}</b></div>`;
+  return `<div class="section"><p class="lead">Chaque matin, je compare mes prédictions aux résultats. Je ne réajuste mes réglages que lorsque l'écart est statistiquement solide (sinon c'est du hasard), et je note ici ce que j'en retiens. Log-loss : plus bas = mieux ; 0,693 = pile ou face.</p>
+   <article class="game"><div class="kv">
+     ${metric('Matchs évalués (modèle complet)', m.n_matchs)}${metric('Log-loss du modèle', m.logloss_modele)}
+     ${metric('Log-loss marché (cotes nhl.com)', m.logloss_marche)}${metric('Log-loss modèle seul', m.logloss_modele_seul)}
+     ${metric('Gardiens projetés corrects', m.gardiens_prevus_corrects==null?null:Math.round(m.gardiens_prevus_corrects*100)+' %', m.n_gardiens?`(${m.n_gardiens} cas)`:'')}
+   </div></article>
+   <h2>Réglages actuels</h2>${table([['Réglage',r=>[esc(r.label),r.label]],['Valeur apprise',r=>[fmtP(r.k,r.v),r.v],1],['Départ',r=>[fmtP(r.k,r.d),r.d],1],['Écart',r=>[r.v===r.d?'<span class="sub">inchangé</span>':`<span class="chip warn">${r.v>r.d?'+':''}${fmtP(r.k,r.v-r.d)}</span>`,r.v-r.d]]], rows)}
+   <h2>Les autres parieurs valent-ils quelque chose ?</h2>
+   <p class="lead">Je n'accorde aucun poids à une source tant qu'elle n'a pas prouvé, sur au moins 30 matchs, qu'elle gagne nettement plus d'une fois sur deux (test statistique à 5 %). Les classements de parieurs contiennent toujours des chanceux : être en tête sur 80 paris ne prouve rien quand des milliers de joueurs participent.</p>
+   ${table([['Source',r=>[esc(r.signal),r.signal]],['Paris',r=>[r.n,r.n],1],['Gagnés',r=>[r.n?`${r.gagnes}/${r.n} (${pct(r.taux)})`:'—',r.taux??-1],1],['Verdict',r=>[r.n<30?'<span class="chip">En observation</span>':r.prouve?'<span class="chip good">Prouvé</span>':'<span class="chip bad">Pas prouvé</span>',r.z??0]]], D.signaux||[])}
+   <h2>Recalage final (résultats réels par niveau de confiance)</h2>
+   <p class="lead">Avant d'afficher une probabilité, je la compare à ce qui s'est vraiment passé quand j'annonçais le même niveau, et je la corrige avec prudence (un niveau vu 30 fois ne compte qu'à moitié).</p>
+   ${(()=>{ const C = P.calib||{}; const lab = {point:'Au moins 1 point', but:'Au moins 1 but', tirs2:'2 tirs cadrés et plus', tirs3:'3 tirs cadrés et plus'};
+     const rowsC = Object.entries(C).flatMap(([k,bins])=>(bins||[]).map(b=>({k:lab[k]||k, ...b})));
+     return rowsC.length ? table([['Pari',r=>[esc(r.k),r.k]],['Annoncé',r=>[`${Math.round(r.lo*100)}–${Math.round(Math.min(1,r.hi)*100)} %`,r.lo],1],['Cas',r=>[r.n,r.n],1],['Prévu',r=>[pct(r.prevu),r.prevu],1],['Réel',r=>[pct(r.reel),r.reel],1],['Écart',r=>{const e=r.reel-r.prevu;return [`<span class="chip ${Math.abs(e)<0.05?'':e>0?'good':'bad'}">${e>0?'+':''}${Math.round(e*100)} pts</span>`,e]},1]], rowsC) : '<div class="empty">Pas encore assez de résultats.</div>'; })()}
+   <h2>Journal critique</h2>
+   <div class="journal">${J.map(j=>`<article><h3>${frDate(j.date)}</h3>
+     ${(j.misses||[]).length?`<div><b>Erreurs marquantes de la veille</b><ul>${j.misses.map(x=>`<li>${esc(x.match)} : favori ${esc(x.favori)} à ${pct(x.prob)} a perdu. Pistes : ${esc(x.causes.join(' ; '))}.</li>`).join('')}</ul></div>`:''}
+     ${(j.changes||[]).length?`<div><b>Ajustements</b><ul>${j.changes.map(c=>`<li>${esc(c.explication||c.label)}</li>`).join('')}</ul></div>`:''}
+     ${(j.lessons||[]).length?`<div><b>Leçons</b><ul>${j.lessons.map(l=>`<li>${esc(l)}</li>`).join('')}</ul></div>`:'<span class="sub">Aucune leçon statistiquement solide pour l’instant.</span>'}
+   </article>`).join('') || '<div class="empty">Le journal démarre après la première soirée évaluée.</div>'}</div></div>`;
+}
+
+// ---- Lancer une analyse depuis n'importe quel appareil
+async function launch(mode){
+  const msg = $('#run-msg'); window.open('https://github.com/hatifgang/nhltime/actions/workflows/site.yml', '_blank'); msg.innerHTML = 'Analyse à la demande : sur la page GitHub qui s’ouvre, clique sur <b>Run workflow</b> (tâches : nhl-prematch ou nhl-update). Le site se met à jour environ 3 minutes après. Sinon, les analyses automatiques tournent seules plusieurs fois par jour.';
+}
+
+
+// ---- Export Excel (toutes les feuilles, historique complet)
+async function exportXlsx(){
+  const msg = $('#run-msg'); msg.textContent = 'Préparation du fichier Excel…';
+  try{
+    const db = await (await fetch('api/history.json',{cache:'no-store'})).json();
+    const wb = XLSX.utils.book_new();
+    const sheet = (name, rows, cols) => { const data = (rows||[]).map(r=>Object.fromEntries(cols.map(c=>[c, Array.isArray(r[c]) ? r[c].join('; ') : r[c]]))); const ws = XLSX.utils.json_to_sheet(data, {header: cols}); ws['!cols'] = cols.map(c=>({wch: Math.max(10, c.length+2)})); XLSX.utils.book_append_sheet(wb, ws, name); };
+    sheet('Résultats', db.results, ['date','exterieur','score_ext','score_dom','domicile','mode','tirs_ext','tirs_dom','gardiens','lieu','vainqueur','faits','source','consulte']);
+    sheet('Équipes', db.teams, ['date','equipe','nom','mj','v','d','dp','pts','pct_pts','rang_div','rang_conf','bp_match','bc_match','tirs_match','tirs_contre_match','pct_an','pct_dn','pct_arrets','pdo','chance_bm','corsi','corsi_serre','xgf','xga','bilan10','serie','dom','ext','source','consulte']);
+    sheet('Joueurs', db.players, ['date','match','equipe','nom','pos','statut','ligne','mj','buts','passes','points','tirs','pct_tirs','buts_match','pts_match','l10_buts_match','l10_pts_match','toi','toi_an','sequence','vs_adv','p_but','p_passe','p_point','source','consulte']);
+    sheet('Blessures', db.injuries, ['date','team','player','status','detail','updated','source','consulte']);
+    sheet('Prédictions', db.predictions, ['date','etape','match','type','selection','prob','cote','prob_implicite','valeur','confiance','resultat','consulte']);
+    sheet('Cotes', db.odds, ['date','match','marche','selection','cote','prob_implicite','source','heure']);
+    sheet('Apprentissage', (db.journal||[]).map(j=>({date:j.date, ajustements:(j.changes||[]).map(c=>c.explication||c.label), lecons:j.lessons||[], erreurs:(j.misses||[]).map(x=>`${x.match} (${Math.round(x.prob*100)} %) : ${x.causes.join(', ')}`)})), ['date','ajustements','lecons','erreurs']);
+    XLSX.writeFile(wb, `NHL_suivi_${D?.meta?.soiree || 'export'}.xlsx`);
+    msg.textContent = 'Fichier Excel téléchargé.';
+  }catch(e){ msg.textContent = 'Export impossible pour le moment.'; }
+}
+
+let wmxReady = false;
+async function load(){
+  try{ D = await (await fetch('api/data.json',{cache:'no-store'})).json(); }catch(e){ D = null; }
+  if(!D){ $('#panels').innerHTML = '<div class="empty">Aucune analyse enregistrée pour l’instant. Appuie sur « Lancer MISE À JOUR » pour démarrer.</div>'; return; }
+  const tabSel = document.querySelector('#tabs [aria-selected="true"]')?.id?.slice(2);
+  init();
+  if(!wmxReady){ wmxReady = true; wmxInit(); } else { wmxFill(); }
+  wpInit();
+  if(tabSel) document.getElementById('t-'+tabSel)?.click();
+}
+document.querySelectorAll('.runbar button.run').forEach(b=>b.addEventListener('click', ()=>launch(b.dataset.mode)));
+$('#xls').addEventListener('click', exportXlsx);
+load();
+
+</script>
+
+</body></html>

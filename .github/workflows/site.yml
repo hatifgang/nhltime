@@ -1,0 +1,60 @@
+# Analyses automatiques (NHL, NBA, KHL/Europe) et mise en ligne du site sur GitHub Pages.
+# Les données (historique, apprentissage) vivent sur la branche « data », réécrite à chaque passage (pas d'historique lourd).
+name: Analyses et site
+on:
+  schedule:
+    - cron: '0 7 * * *'      # MISE À JOUR NHL + NBA (8 h Paris)
+    - cron: '10 6,13 * * *'  # KHL / Europe (7 h 10 et 14 h 10 Paris)
+    - cron: '30 15,21 * * *' # PRÉ-MATCH NHL + NBA (16 h 30 et 22 h 30 Paris)
+  workflow_dispatch:
+    inputs:
+      taches:
+        description: 'Tâches (nhl-update nhl-prematch nba-update nba-prematch europe)'
+        default: 'nhl-prematch nba-prematch europe'
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: analyses
+  cancel-in-progress: false
+jobs:
+  analyses:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --no-audit --no-fund
+      - name: Récupérer les données
+        run: git clone --quiet --depth 1 --branch data "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" data || mkdir -p data
+      - name: Analyses
+        env:
+          SCHED: ${{ github.event.schedule }}
+          TACHES: ${{ inputs.taches }}
+        run: |
+          case "$SCHED" in
+            '0 7 * * *') T="nhl-update nba-update" ;;
+            '10 6,13 * * *') T="europe" ;;
+            '30 15,21 * * *') T="nhl-prematch nba-prematch" ;;
+            *) T="$TACHES" ;;
+          esac
+          echo "Tâches : $T"
+          NHL_LOCAL_STORE="$PWD/data" node --experimental-strip-types --no-warnings scripts/gh-run.mts $T
+      - name: Sauvegarder les données
+        run: |
+          cd data && rm -rf .git && git init -q -b data
+          git add -A
+          git -c user.name="nhltime-bot" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "données $(date -u +%F_%H%M)"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" data
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4

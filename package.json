@@ -1,0 +1,12 @@
+{
+  "name": "nhl-paris-cloud",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:run": "node --experimental-strip-types scripts/local-run.mts"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^10.0.0",
+    "@netlify/functions": "^4.0.0"
+  }
+}

@@ -101,6 +101,17 @@ export async function runPipeline(mode: 'update' | 'prematch', opts: { date?: st
 }
 
 // ------------------------------------------------------------------ contexte
+/** L'API stats de la LNH ne renvoie plus que 100 lignes par requête (même avec limit=-1) : on lit toutes les pages,
+ * triées par joueur pour qu'aucune ligne ne saute d'une page à l'autre. */
+async function pages(base: string): Promise<{ data: any[] }> {
+  const srt = 'sort=' + encodeURIComponent('[{"property":"playerId","direction":"ASC"}]');
+  const url = (st: number) => `${base}&limit=100&start=${st}&${srt}`;
+  const first = await safe(url(0), { data: [] as any[], total: 0 });
+  const starts: number[] = [];
+  for (let st = 100; st < (first.total || 0); st += 100) starts.push(st);
+  const more = await pool(starts, 6, async st => (await safe(url(st), { data: [] as any[] })).data);
+  return { data: [...first.data, ...more.flat()] };
+}
 async function buildContext(today: string) {
   const [cur, prev] = seasons(today);
   const consulted = parisStamp();
@@ -110,13 +121,13 @@ async function buildContext(today: string) {
     get(`${W}/standings/now`),
     safe(`${S}/team/summary?limit=-1&${q(cur)}`, { data: [] as any[] }),
     safe(`${S}/team/summary?limit=-1&${q(prev)}`, { data: [] as any[] }),
-    safe(`${S}/skater/summary?limit=-1&${q(cur)}`, { data: [] as any[] }),
-    safe(`${S}/skater/summary?limit=-1&${q(prev)}`, { data: [] as any[] }),
-    safe(`${S}/skater/timeonice?limit=-1&${q(cur)}`, { data: [] as any[] }),
-    safe(`${S}/goalie/summary?limit=-1&${q(cur)}`, { data: [] as any[] }),
-    safe(`${S}/goalie/summary?limit=-1&${q(prev)}`, { data: [] as any[] }),
-    safe(`${S}/skater/goalsForAgainst?limit=-1&${q(cur)}`, { data: [] as any[] }),
-    safe(`${S}/skater/goalsForAgainst?limit=-1&${q(prev)}`, { data: [] as any[] }),
+    pages(`${S}/skater/summary?${q(cur)}`),
+    pages(`${S}/skater/summary?${q(prev)}`),
+    pages(`${S}/skater/timeonice?${q(cur)}`),
+    pages(`${S}/goalie/summary?${q(cur)}`),
+    pages(`${S}/goalie/summary?${q(prev)}`),
+    pages(`${S}/skater/goalsForAgainst?${q(cur)}`),
+    pages(`${S}/skater/goalsForAgainst?${q(prev)}`),
     // PDO (réussite au tir + % d'arrêts à 5 contre 5) et Corsi (tentatives de tir) : la chance d'un côté, la domination de l'autre
     safe(`${S}/team/percentages?limit=-1&${q(cur)}`, { data: [] as any[] }),
     safe(`${S}/team/summaryshooting?limit=-1&${q(cur)}`, { data: [] as any[] }),

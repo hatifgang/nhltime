@@ -27,6 +27,16 @@ for (const t of process.argv.slice(2)) {
 // ---- site statique : pages + données
 const D = process.env.NHL_LOCAL_STORE!, S = path.resolve('site');
 const rd = (f: string) => { try { return JSON.parse(fs.readFileSync(path.join(D, f), 'utf8')); } catch { return null; } };
+
+// ---- combinés « mélange » des choix des autres parieurs (NHL + NBA + KHL)
+const { runMix } = await import('../netlify/functions/lib/mix.mts');
+let mix: any = null;
+try {
+  const mdb = rd('mix_db.json') || {};
+  mix = await runMix(mdb, rd('latest.json'), rd('nba_latest.json'), rd('europe_latest.json'));
+  fs.writeFileSync(path.join(D, 'mix_db.json'), JSON.stringify(mdb));
+  console.log('combinés :', mix.combos.length, 'proposé(s),', mix.legs.length, 'sélection(s) du public,', mix.graded, 'noté(s)');
+} catch (e: any) { console.error('ÉCHEC combinés :', e?.stack || e); }
 const wr = (f: string, v: any) => { const p = path.join(S, 'api', f); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, JSON.stringify(v ?? null)); };
 fs.rmSync(S, { recursive: true, force: true });
 fs.cpSync(path.resolve('public'), S, { recursive: true });
@@ -38,5 +48,6 @@ wr('nba/data.json', rd('nba_latest.json'));
 const ndb = rd('nba_db.json'); if (ndb) delete ndb.boxes;   // boîtes de score brutes : trop lourdes pour l'Excel
 wr('nba/history.json', ndb);
 wr('europe/data.json', rd('europe_latest.json'));
+wr('mix.json', mix);
 console.log('site construit :', fs.readdirSync(path.join(S, 'api')).join(', '));
 if (fail) console.log(`${fail} analyse(s) en échec : le site est quand même reconstruit avec les dernières données.`);

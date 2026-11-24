@@ -55,16 +55,42 @@ const wr = (f: string, v: any) => { const p = path.join(S, 'api', f); fs.mkdirSy
 fs.rmSync(S, { recursive: true, force: true });
 fs.cpSync(path.resolve('public'), S, { recursive: true });
 fs.writeFileSync(path.join(S, '.nojekyll'), '');
-wr('data.json', rd('latest.json'));
-wr('history.json', rd('db.json'));
-wr('mescotes.json', rd('mescotes.json') || {});
-wr('nba/data.json', rd('nba_latest.json'));
+const nhlL = rd('latest.json'), nbaL = rd('nba_latest.json'), eurL = rd('europe_latest.json'), footL = rd('foot_latest.json'), tenL = rd('tennis_latest.json');
 const ndb = rd('nba_db.json'); if (ndb) delete ndb.boxes;   // boîtes de score brutes : trop lourdes pour l'Excel
-wr('nba/history.json', ndb);
-wr('europe/data.json', rd('europe_latest.json'));
-wr('mix.json', mix);
-wr('recherche.json', research);
-wr('foot/data.json', rd('foot_latest.json'));
-wr('tennis/data.json', rd('tennis_latest.json'));
+// historique NHL allégé pour l'Excel (60 derniers jours)
+const hdb = rd('db.json'); const cut = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
+if (hdb) for (const k of Object.keys(hdb)) if (Array.isArray(hdb[k])) hdb[k] = hdb[k].filter((x: any) => !x?.date || String(x.date) >= cut);
+
+// aperçu public : vrais résultats et 1 prono gratuit
+const stats: any[] = [];
+const v = (nhlL?.reliability || []).find((r: any) => r.type === 'Vainqueur'); if (v?.n) stats.push({ nom: 'NHL · vainqueurs', n: v.n, gagnes: Math.round(v.reussite_fav * v.n), prevu: v.prevu_moy });
+const b = (nbaL?.reliability || []).find((r: any) => r.type === 'Vainqueur'); if (b?.n) stats.push({ nom: 'NBA · vainqueurs', n: b.n, gagnes: b.gagnes, prevu: b.prevu });
+for (const [nom, L] of [['KHL, SHL, Liiga', eurL], ['Football', footL]] as const) if (L?.bilan?.total?.n) stats.push({ nom, n: L.bilan.total.n, gagnes: L.bilan.total.gagnes, prevu: L.bilan.total.prevu });
+if (tenL?.bilan?.n) stats.push({ nom: 'Tennis', n: tenL.bilan.n, gagnes: tenL.bilan.gagnes, prevu: tenL.bilan.prevu });
+if (mix?.bilan?.n) stats.push({ nom: 'Combinés à cote 2', n: mix.bilan.n, gagnes: mix.bilan.gagnes, prevu: null });
+const cands = [...(footL?.picks || []).map((x: any) => ({ ...x, sport: x.lg })), ...(eurL?.picks || []).map((x: any) => ({ ...x, sport: x.lg }))]
+  .filter((x: any) => x.prob >= 0.6 && x.prob <= 0.8 && x.utc && Date.parse(x.utc) > Date.now()).sort((a: any, c: any) => c.prob - a.prob);
+const g = cands[0];
+wr('apercu.json', { genere: new Date().toISOString(), stats: stats.filter(x => x.prevu != null || x.n), gratuit: g ? { label: g.label, sport: g.sport, match: g.match, heure: g.heure, prob: g.prob, cote_min: g.cote_min } : null });
+
+const { sbOn, vipUpsert } = await import('./sb.mts');
+if (sbOn()) {
+  // abonnements actifs : contenu VIP dans Supabase (lu seulement par les abonnés), rien en clair sur le site
+  try {
+    await vipUpsert([
+      { categorie: 'nhl', cle: 'nhl', contenu: nhlL }, { categorie: 'nhl', cle: 'historique', contenu: hdb }, { categorie: 'nhl', cle: 'europe', contenu: eurL },
+      { categorie: 'nba', cle: 'nba', contenu: nbaL }, { categorie: 'nba', cle: 'historique', contenu: ndb },
+      { categorie: 'foot', cle: 'foot', contenu: footL }, { categorie: 'tennis', cle: 'tennis', contenu: tenL },
+      { categorie: 'paris_du_jour', cle: 'mix', contenu: mix }, { categorie: 'paris_du_jour', cle: 'recherche', contenu: research },
+    ]);
+    console.log('contenu VIP envoyé à Supabase');
+  } catch (e: any) { console.error('ÉCHEC envoi VIP :', e?.message || e); }
+  fs.writeFileSync(path.join(S, 'config.js'), `window.NT_CONFIG = ${JSON.stringify({ url: process.env.SUPABASE_URL, anon: process.env.SUPABASE_ANON_KEY || '' })};\n`);
+} else {
+  // pas encore de Supabase : le site reste ouvert à tous, comme avant
+  wr('data.json', nhlL); wr('history.json', rd('db.json')); wr('mescotes.json', rd('mescotes.json') || {});
+  wr('nba/data.json', nbaL); wr('nba/history.json', ndb); wr('europe/data.json', eurL);
+  wr('mix.json', mix); wr('recherche.json', research); wr('foot/data.json', footL); wr('tennis/data.json', tenL);
+}
 console.log('site construit :', fs.readdirSync(path.join(S, 'api')).join(', '));
 if (fail) console.log(`${fail} analyse(s) en échec : le site est quand même reconstruit avec les dernières données.`);

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Admin abonnements · NHL Time</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/nt.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="bar"><a class="brand" href="./">NHL<span>Time</span></a><nav class="top-links"><a href="compte.html">Mon compte</a></nav></header>
+  <h1>Abonnements</h1>
+  <p class="sub">Vérifie le paiement reçu (montant et référence) sur PayPal, Revolut ou ton portefeuille crypto, puis active. L’accès s’ouvre aussitôt pour 30 jours.</p>
+  <div id="app"><div class="card">Chargement…</div></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js" onerror="void 0"></script>
+<script src="js/nt.js"></script>
+<script>
+const $ = s => document.querySelector(s), esc = NT.esc;
+const fmtD = d => d ? new Date(d).toLocaleString('fr-FR', {dateStyle:'short', timeStyle:'short'}) : '—';
+const catNom = id => NT.CATS.find(c => c.id === id)?.nom || id;
+async function main(){
+  if (!NT.sb) { $('#app').innerHTML = '<div class="card">Supabase n’est pas encore configuré.</div>'; return; }
+  const p = await NT.profile();
+  if (!p?.is_admin) { $('#app').innerHTML = '<div class="card">Réservé à l’administrateur. <a href="compte.html">Se connecter</a></div>'; return; }
+  const [{ data: S }, { data: P }] = await Promise.all([
+    NT.sb.from('subscriptions').select('*').order('created_at', { ascending: false }).limit(500),
+    NT.sb.from('profiles').select('id,email,created_at'),
+  ]);
+  const mail = Object.fromEntries((P || []).map(x => [x.id, x.email]));
+  const now = Date.now();
+  const pend = (S || []).filter(s => s.statut === 'en_attente'), act = (S || []).filter(s => s.statut === 'actif' && Date.parse(s.fin) >= now);
+  const ca = act.reduce((t, s) => t + +s.prix, 0);
+  const row = (s, btns) => `<tr><td>${esc(mail[s.user_id] || s.user_id)}<div class="sub">${fmtD(s.created_at)}</div></td><td>${s.categories.map(catNom).join(' + ')}</td><td><b>${s.prix} €</b></td><td>${esc(s.methode)}<div class="sub" style="word-break:break-all">${esc(s.reference || '')}</div></td><td>${btns}</td></tr>`;
+  $('#app').innerHTML = `<div class="card"><b>${act.length}</b> abonnement(s) actif(s) · <b>${ca} €</b> par mois · <b>${(P||[]).length}</b> compte(s) · <b>${pend.length}</b> en attente</div>
+    <h2>À valider</h2><div class="card">${pend.length ? `<table><tr><th>Compte</th><th>Formule</th><th>Prix</th><th>Paiement</th><th></th></tr>${pend.map(s => row(s, `<button class="btn small" data-on="${s.id}">Activer 30 j</button> <button class="btn bad small" data-no="${s.id}">Refuser</button>`)).join('')}</table>` : '<span class="sub">Aucune demande en attente.</span>'}</div>
+    <h2>Actifs</h2><div class="card">${act.length ? `<table><tr><th>Compte</th><th>Formule</th><th>Prix</th><th>Paiement</th><th>Fin</th></tr>${act.map(s => row(s, `${fmtD(s.fin)} <button class="btn ghost small" data-plus="${s.id}">+30 j</button>`)).join('')}</table>` : '<span class="sub">Aucun.</span>'}</div>
+    <h2>Comptes inscrits</h2><div class="card"><table>${(P||[]).map(x => `<tr><td>${esc(x.email)}</td><td class="sub">${fmtD(x.created_at)}</td></tr>`).join('')}</table></div>`;
+  const upd = async (id, patch) => { const { error } = await NT.sb.from('subscriptions').update(patch).eq('id', id); if (error) alert(error.message); main(); };
+  document.querySelectorAll('[data-on]').forEach(b => b.onclick = () => {
+    const s = S.find(x => x.id == b.dataset.on);
+    // renouvellement : si la même formule est encore active, les 30 jours s'ajoutent à la fin de l'ancienne
+    const same = act.filter(x => x.user_id === s.user_id && x.categories.slice().sort().join() === s.categories.slice().sort().join());
+    const from = same.reduce((m, x) => Math.max(m, Date.parse(x.fin)), Date.now());
+    upd(s.id, { statut: 'actif', debut: new Date().toISOString(), fin: new Date(from + 30 * 86400000).toISOString() });
+  });
+  document.querySelectorAll('[data-no]').forEach(b => b.onclick = () => confirm('Refuser cette demande ?') && upd(b.dataset.no, { statut: 'refuse' }));
+  document.querySelectorAll('[data-plus]').forEach(b => b.onclick = () => { const s = S.find(x => x.id == b.dataset.plus); upd(s.id, { fin: new Date(Date.parse(s.fin) + 30 * 86400000).toISOString() }); });
+}
+main();
+</script>
+</body>
+</html>

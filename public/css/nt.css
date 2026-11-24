@@ -1,0 +1,39 @@
+/* Pages compte, VIP, admin et légales : même habillage que l'accueil. */
+:root{--bg:#f3f5f7;--surface:#fff;--surface-2:#e9edf1;--line:#d5dce3;--fg:#16212b;--muted:#5b6a78;--accent:#1d4e89;--accent-soft:#dce7f4;--good:#1e7a46;--good-bg:#dff1e6;--bad:#b0332a;--bad-bg:#f8e0dd;--warn:#946200;--warn-bg:#fbefd2;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;--f-body:"Barlow",system-ui,-apple-system,sans-serif}
+@media (prefers-color-scheme:dark){:root{--bg:#0f151b;--surface:#17202a;--surface-2:#1f2a36;--line:#2c3a48;--fg:#e8eef4;--muted:#9aaab9;--accent:#7fb0ea;--accent-soft:#1c2c40;--good:#6fd39a;--good-bg:#173226;--bad:#ff8a80;--bad-bg:#3a1d1b;--warn:#f0c060;--warn-bg:#3a2f14}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body);padding-bottom:70px}
+a{color:var(--accent)}
+.wrap{max-width:820px;margin:0 auto;padding:0 16px}
+header.bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);margin-bottom:18px}
+.brand{font-family:var(--f-display);font-weight:700;font-size:1.45rem;text-decoration:none;color:var(--fg)} .brand span{color:var(--accent)}
+.top-links{display:flex;gap:12px;font-weight:600;font-size:.92rem;flex-wrap:wrap} .top-links a{text-decoration:none;color:var(--fg)}
+h1{font-family:var(--f-display);font-size:2rem;margin:0 0 6px} h2{font-family:var(--f-display);font-size:1.4rem;margin:24px 0 10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin:12px 0}
+.sub{color:var(--muted);font-size:.88rem}
+label{display:block;font-weight:600;margin:10px 0 4px}
+input[type=email],input[type=password],input[type=text]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit}
+.btn{display:inline-block;border:0;cursor:pointer;padding:10px 16px;border-radius:8px;font:600 .95rem var(--f-body);text-decoration:none;background:var(--accent);color:#fff}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)} .btn.small{padding:6px 10px;font-size:.85rem}
+.btn.bad{background:var(--bad)} .btn:disabled{opacity:.5;cursor:default}
+.tabs{display:flex;gap:6px;margin-bottom:6px} .tabs button{flex:1;padding:9px;border:1px solid var(--line);background:var(--surface-2);color:var(--fg);border-radius:8px;font:600 .95rem var(--f-body);cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.cats{display:grid;gap:8px}
+.cat{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;background:var(--bg)}
+.cat input{margin-top:4px;width:18px;height:18px}
+.cat b{font-family:var(--f-display);font-size:1.1rem}
+.total{display:flex;justify-content:space-between;align-items:baseline;margin:12px 0;font-family:var(--f-display);font-size:1.5rem;font-weight:700}
+.pay{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pay label{margin:0;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-weight:600;background:var(--bg)}
+.pay input:checked + span{color:var(--accent)}
+.box{background:var(--accent-soft);border-radius:10px;padding:12px 14px;margin:10px 0;word-break:break-all}
+.chip{display:inline-block;font-size:.78rem;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--surface-2)}
+.chip.good{background:var(--good-bg);color:var(--good)} .chip.bad{background:var(--bad-bg);color:var(--bad)} .chip.warn{background:var(--warn-bg);color:var(--warn)}
+.msg{margin:8px 0;font-weight:600} .msg.err{color:var(--bad)} .msg.ok{color:var(--good)}
+table{width:100%;border-collapse:collapse;font-size:.9rem} th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+footer{color:var(--muted);font-size:.85rem;padding:20px 0} footer a{color:var(--muted)}
+nav.bottom{position:fixed;bottom:0;left:0;right:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom,0)}
+nav.bottom a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;text-decoration:none;color:var(--muted);font-size:.74rem;font-weight:600}
+nav.bottom a svg{width:22px;height:22px} nav.bottom a[aria-current=page]{color:var(--accent)}
+.legal h2{font-size:1.2rem} .legal p,.legal li{color:var(--fg)}

@@ -3,137 +3,207 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>NHL Time · Pronostics NHL, NBA, foot et tennis gratuits et vérifiés</title>
-<meta name="description" content="Pronostics gratuits NHL, NBA, KHL, football (Ligue 1, Premier League, Liga, Serie A, Bundesliga, Ligue des champions) et tennis : probabilités calculées, cotes comparées, résultats vérifiés chaque jour.">
-<meta name="keywords" content="pronostic NHL, pronostic NBA, pronostic hockey, pronostic foot, pronostic Ligue 1, pronostic Ligue des champions, pronostic tennis, paris sportifs, value bet, combiné cote 2">
+<title>NHL Time · Scores en direct et pronostics NHL, NBA, foot, tennis</title>
+<meta name="description" content="Scores en direct gratuits : foot (Ligue 1, Premier League, Liga, Serie A, Bundesliga, Ligue des champions), NHL, NBA et tennis. Pronostics VIP calculés, vérifiés et combinés du jour.">
+<meta name="keywords" content="score en direct, livescore, résultats foot, score NHL, score NBA, score tennis, pronostic NHL, pronostic NBA, pronostic foot, pronostic tennis, combiné du jour">
 <link rel="canonical" href="https://hatifgang.github.io/nhltime/">
 <meta name="robots" content="index,follow">
-<meta property="og:type" content="website">
-<meta property="og:locale" content="fr_FR">
-<meta property="og:site_name" content="NHL Time">
-<meta property="og:title" content="NHL Time · Pronostics sportifs gratuits et vérifiés">
-<meta property="og:description" content="NHL, NBA, KHL, foot et tennis : chances calculées, cotes comparées, chaque pari noté après le match.">
+<meta property="og:type" content="website"><meta property="og:locale" content="fr_FR"><meta property="og:site_name" content="NHL Time">
+<meta property="og:title" content="NHL Time · Scores en direct et pronostics vérifiés">
+<meta property="og:description" content="Foot, NHL, NBA, tennis : scores en direct gratuits et pronostics VIP vérifiés.">
 <meta property="og:url" content="https://hatifgang.github.io/nhltime/">
-<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#0f151b">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@graph":[
- {"@type":"WebSite","name":"NHL Time","url":"https://hatifgang.github.io/nhltime/","inLanguage":"fr-FR","description":"Pronostics sportifs gratuits NHL, NBA, hockey européen, football et tennis, avec résultats vérifiés."},
+ {"@type":"WebSite","name":"NHL Time","url":"https://hatifgang.github.io/nhltime/","inLanguage":"fr-FR","description":"Scores en direct et pronostics sportifs vérifiés : foot, NHL, NBA, tennis."},
  {"@type":"FAQPage","mainEntity":[
-  {"@type":"Question","name":"Comment sont calculés les pronostics ?","acceptedAnswer":{"@type":"Answer","text":"Chaque match est modélisé à partir des statistiques des deux équipes (buts ou points attendus, qualité des tirs, chance, forme, absences, fatigue), puis mélangé aux cotes des bookmakers. Une recherche web récente sur les deux équipes complète l’analyse avant chaque mise à jour."}},
-  {"@type":"Question","name":"Les résultats sont-ils vérifiés ?","acceptedAnswer":{"@type":"Answer","text":"Oui. Chaque pari proposé est enregistré avant le match puis noté automatiquement avec le score officiel. Le taux de réussite réel est affiché à côté du taux annoncé."}},
-  {"@type":"Question","name":"Le site est-il gratuit ?","acceptedAnswer":{"@type":"Answer","text":"Oui, tout est gratuit et sans inscription. Le site n’est lié à aucun bookmaker."}},
-  {"@type":"Question","name":"Quels sports et championnats sont couverts ?","acceptedAnswer":{"@type":"Answer","text":"NHL, NBA, KHL, SHL et Liiga ; football : Ligue 1, Premier League, Liga, Serie A, Bundesliga, Saudi Pro League, Ligue des champions, Ligue Europa et Ligue Conférence ; tennis ATP et WTA."}}
+  {"@type":"Question","name":"Les scores en direct sont-ils gratuits ?","acceptedAnswer":{"@type":"Answer","text":"Oui, les scores en direct du foot, de la NHL, de la NBA et du tennis sont gratuits et sans inscription."}},
+  {"@type":"Question","name":"Que contient l’abonnement VIP ?","acceptedAnswer":{"@type":"Answer","text":"Tous les pronostics et analyses des sports choisis (NHL et hockey européen, NBA, foot, tennis) et, en option, les combinés « Paris du jour ». Chaque pronostic est noté après le match."}},
+  {"@type":"Question","name":"Combien coûte le VIP ?","acceptedAnswer":{"@type":"Answer","text":"15 € par mois pour une catégorie, 5 € par catégorie en plus (10 € pour le foot). Exemple : NHL + NBA = 20 € par mois."}},
+  {"@type":"Question","name":"Les pronostics sont-ils garantis ?","acceptedAnswer":{"@type":"Answer","text":"Non. Ce sont des estimations statistiques : aucun pronostic n’est sûr. Le taux de réussite réel est publié à côté du taux annoncé."}}
  ]}
 ]}
 </script>
 <style>
-:root{--bg:#f3f5f7;--surface:#fff;--surface-2:#e9edf1;--line:#d5dce3;--fg:#16212b;--muted:#5b6a78;--accent:#1d4e89;--accent-soft:#dce7f4;--good:#1e7a46;--good-bg:#dff1e6;
+:root{--bg:#f3f5f7;--surface:#fff;--surface-2:#e9edf1;--line:#d5dce3;--fg:#16212b;--muted:#5b6a78;--accent:#1d4e89;--accent-soft:#dce7f4;--live:#c62828;--good:#1e7a46;
   --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;--f-body:"Barlow",system-ui,-apple-system,sans-serif}
-@media (prefers-color-scheme:dark){:root{--bg:#0f151b;--surface:#17202a;--surface-2:#1f2a36;--line:#2c3a48;--fg:#e8eef4;--muted:#9aaab9;--accent:#7fb0ea;--accent-soft:#1c2c40;--good:#6fd39a;--good-bg:#173226}}
+@media (prefers-color-scheme:dark){:root{--bg:#0f151b;--surface:#17202a;--surface-2:#1f2a36;--line:#2c3a48;--fg:#e8eef4;--muted:#9aaab9;--accent:#7fb0ea;--accent-soft:#1c2c40;--live:#ff6b6b;--good:#6fd39a}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 var(--f-body)}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 var(--f-body);padding-bottom:64px}
 a{color:var(--accent)}
-.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
-nav.top{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:2px solid var(--fg)}
-nav.top .brand{font-family:var(--f-display);font-weight:700;font-size:1.5rem;text-decoration:none;color:var(--fg);letter-spacing:.02em}
-nav.top .links{display:flex;flex-wrap:wrap;gap:4px 14px;font-weight:600}
-nav.top .links a{text-decoration:none;color:var(--fg)} nav.top .links a:hover{color:var(--accent)}
-header.hero{padding:44px 0 28px}
-h1{font-family:var(--f-display);font-size:clamp(2.1rem,6vw,3.4rem);line-height:1.05;margin:0 0 14px}
-.lead{font-size:1.12rem;color:var(--muted);max-width:720px;margin:0 0 22px}
-.cta{display:flex;flex-wrap:wrap;gap:10px}
-.btn{display:inline-block;padding:11px 18px;border-radius:6px;font-weight:600;text-decoration:none;border:2px solid var(--accent)}
-.btn.main{background:var(--accent);color:#fff} .btn.ghost{color:var(--accent);background:transparent}
-h2{font-family:var(--f-display);font-size:1.9rem;margin:40px 0 14px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;text-decoration:none;color:var(--fg);display:block}
-a.card:hover{border-color:var(--accent)}
-.card h3{font-family:var(--f-display);font-size:1.35rem;margin:0 0 6px}
-.card p{margin:0;color:var(--muted);font-size:.95rem}
-.stat{font-family:var(--f-display);font-size:2.2rem;font-weight:700;line-height:1}
-.stat small{font-size:1rem;color:var(--muted);font-weight:500}
-.sub{color:var(--muted);font-size:.88rem}
-details{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-bottom:8px}
+.wrap{max-width:960px;margin:0 auto;padding:0 16px}
+header.bar{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.row1{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0}
+.brand{font-family:var(--f-display);font-weight:700;font-size:1.45rem;text-decoration:none;color:var(--fg)}
+.brand span{color:var(--accent)}
+.top-links{display:flex;gap:12px;font-weight:600;font-size:.92rem;flex-wrap:wrap}
+.top-links a{text-decoration:none;color:var(--fg)}
+.top-links a.vip{color:#fff;background:var(--accent);padding:4px 10px;border-radius:999px}
+.dates{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;scrollbar-width:none}
+.dates::-webkit-scrollbar{display:none}
+.dates button{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;padding:4px 9px;font:600 .82rem var(--f-body);cursor:pointer;line-height:1.15;text-align:center}
+.dates button small{display:block;font-weight:500;color:var(--muted)}
+.dates button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+.dates button[aria-pressed=true] small{color:#fff}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:2px 0 10px}
+.chips button{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:5px 12px;font:600 .85rem var(--f-body);cursor:pointer}
+.chips button[aria-pressed=true]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.chips button .n{opacity:.7;font-weight:500;margin-left:4px}
+.comp{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:10px 0;overflow:hidden}
+.comp h2{display:flex;align-items:center;gap:8px;margin:0;padding:9px 12px;font:700 1rem var(--f-display);letter-spacing:.02em;background:var(--surface-2)}
+.comp h2 img{width:20px;height:20px;object-fit:contain}
+.comp h2 .sport{margin-left:auto;font:600 .72rem var(--f-body);color:var(--muted);text-transform:uppercase}
+.m{display:grid;grid-template-columns:58px 1fr auto 26px;gap:8px;align-items:center;padding:9px 12px;border-top:1px solid var(--line)}
+.m .st{font-size:.8rem;color:var(--muted);text-align:center;font-weight:600}
+.m .st.live{color:var(--live)}
+.m .st.live::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--live);margin-right:4px;vertical-align:middle;animation:p 1.2s infinite}
+@keyframes p{50%{opacity:.25}}
+.m .teams{min-width:0}
+.m .t{display:flex;align-items:center;gap:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m .t img{width:18px;height:18px;object-fit:contain;flex:0 0 18px}
+.m .t.win{font-weight:700}
+.m .sc{text-align:right;font:700 1.05rem var(--f-display);line-height:1.35}
+.m .sc .sets{font:500 .78rem var(--f-body);color:var(--muted)}
+.star{border:0;background:none;cursor:pointer;font-size:1.05rem;color:var(--muted);padding:0}
+.star[aria-pressed=true]{color:#e0a100}
+.empty{padding:22px;text-align:center;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:10px;margin:12px 0}
+.promo{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--accent-soft);border-radius:10px;padding:12px 14px;margin:12px 0}
+.promo b{font-family:var(--f-display);font-size:1.15rem}
+.btn{display:inline-block;padding:8px 14px;border-radius:8px;font-weight:600;text-decoration:none;background:var(--accent);color:#fff}
+section.seo{margin:34px 0 10px;color:var(--fg)}
+section.seo h1{font-family:var(--f-display);font-size:1.7rem;margin:0 0 8px}
+section.seo h2{font-family:var(--f-display);font-size:1.3rem;margin:20px 0 6px}
+section.seo p{color:var(--muted);margin:0 0 8px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-bottom:6px}
 summary{font-weight:600;cursor:pointer}
-.warn{background:var(--accent-soft);border-radius:8px;padding:14px 16px;margin:36px 0 10px}
-footer{padding:20px 0 40px;color:var(--muted);font-size:.88rem;border-top:1px solid var(--line);margin-top:30px}
+.warn{background:var(--surface-2);border-radius:8px;padding:12px 14px;margin:20px 0;font-size:.9rem}
+footer{color:var(--muted);font-size:.85rem;padding:12px 0 24px}
+footer a{color:var(--muted)}
+nav.bottom{position:fixed;bottom:0;left:0;right:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom,0)}
+nav.bottom a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;text-decoration:none;color:var(--muted);font-size:.74rem;font-weight:600}
+nav.bottom a svg{width:22px;height:22px}
+nav.bottom a[aria-current=page]{color:var(--accent)}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <nav class="top" aria-label="Navigation principale">
-    <a class="brand" href="./">NHL Time</a>
-    <div class="links"><a href="nhl.html">NHL</a><a href="nba.html">NBA</a><a href="hockey.html">KHL / Europe</a><a href="foot.html">Foot</a><a href="tennis.html">Tennis</a><a href="mix.html">Combinés</a></div>
-  </nav>
-
-  <header class="hero">
-    <h1>Pronostics NHL, NBA, foot et tennis : calculés, comparés aux cotes, vérifiés</h1>
-    <p class="lead">Chaque jour, NHL Time analyse tous les matchs de NHL, NBA, KHL, des grands championnats de foot et du tennis. Pour chaque pari : les vraies chances de passer, la cote minimale pour qu’il soit rentable, et le résultat noté après le match. Gratuit, sans inscription, sans bookmaker partenaire.</p>
-    <div class="cta"><a class="btn main" href="mix.html">Voir les combinés du jour</a><a class="btn ghost" href="#resultats">Nos résultats vérifiés</a></div>
-  </header>
-
-  <section aria-labelledby="sports">
-    <h2 id="sports">Pronostics par sport</h2>
-    <div class="grid">
-      <a class="card" href="nhl.html"><h3>Pronostic NHL</h3><p>Vainqueur, total de buts, buteurs et points des joueurs. Modèle xG maison, PDO, Corsi, gardiens partants.</p></a>
-      <a class="card" href="nba.html"><h3>Pronostic NBA</h3><p>Vainqueur, écart, total de points, stats des joueurs. Correction de la chance au tir, absences, back-to-back.</p></a>
-      <a class="card" href="foot.html"><h3>Pronostic foot</h3><p>Ligue 1, Premier League, Liga, Serie A, Bundesliga, Saudi Pro League, Ligue des champions, Europa et Conférence.</p></a>
-      <a class="card" href="hockey.html"><h3>Pronostic KHL, SHL, Liiga</h3><p>Hockey européen : seulement les paris à plus de 50 % de chances, avec le vote des parieurs russes en KHL.</p></a>
-      <a class="card" href="tennis.html"><h3>Pronostic tennis</h3><p>ATP et WTA : classement Elo par surface (dur, terre battue, gazon), adapté aux 3 sets gagnants en Grand Chelem.</p></a>
-      <a class="card" href="mix.html"><h3>Combinés à cote 2</h3><p>Les sélections les plus jouées par les autres parieurs, validées par nos chiffres et par une recherche web, assemblées pour viser une cote de 2.</p></a>
+<header class="bar">
+  <div class="wrap">
+    <div class="row1">
+      <a class="brand" href="./">NHL<span>Time</span></a>
+      <nav class="top-links" aria-label="Pronostics"><a href="nhl.html">NHL</a><a href="nba.html">NBA</a><a href="foot.html">Foot</a><a href="tennis.html">Tennis</a><a href="hockey.html">KHL</a><a class="vip" href="compte.html">VIP</a></nav>
     </div>
-  </section>
+    <div class="dates" id="dates" role="group" aria-label="Date"></div>
+    <div class="chips" id="sports" role="group" aria-label="Sport"></div>
+    <div class="chips" id="states" role="group" aria-label="État des matchs"></div>
+  </div>
+</header>
+<main class="wrap">
+  <div class="promo"><div><b>Pronostics VIP vérifiés</b><br><span>NHL, NBA, foot, tennis et combinés du jour · dès 15 € par mois</span></div><a class="btn" href="compte.html">Voir les formules</a></div>
+  <div id="list"><div class="empty">Chargement des matchs…</div></div>
 
-  <section aria-labelledby="resultats">
-    <h2 id="resultats">Nos résultats vérifiés</h2>
-    <p class="sub">Chiffres réels, mis à jour automatiquement : chaque pari est enregistré avant le match puis noté avec le score officiel. On affiche aussi ce qu’on avait annoncé, pour que vous jugiez si nos probabilités sont fiables.</p>
-    <div class="grid" id="stats"><div class="card"><p>Chargement des résultats…</p></div></div>
+  <section class="seo">
+    <h1>Scores en direct et pronostics sportifs</h1>
+    <p>NHL Time affiche gratuitement les scores en direct du foot (Ligue 1, Premier League, Liga, Serie A, Bundesliga, Saudi Pro League, Ligue des champions, Ligue Europa, Ligue Conférence), de la NHL, de la NBA et du tennis ATP et WTA, mis à jour toutes les 30 secondes.</p>
+    <p>Les abonnés VIP accèdent aux pronostics complets : probabilités calculées à partir des statistiques (buts attendus, qualité des tirs, forme, absences, fatigue), comparées aux cotes, complétées par une recherche web avant chaque mise à jour, et notées après chaque match.</p>
+    <h2>Questions fréquentes</h2>
+    <details><summary>Les scores en direct sont-ils gratuits ?</summary><p>Oui, sans inscription.</p></details>
+    <details><summary>Que contient l’abonnement VIP ?</summary><p>Tous les pronostics et analyses des sports choisis (NHL et hockey européen, NBA, foot, tennis) et, en option, les combinés « Paris du jour ».</p></details>
+    <details><summary>Combien coûte le VIP ?</summary><p>15 € par mois pour une catégorie, 5 € par catégorie en plus (10 € pour le foot). Exemple : NHL + NBA = 20 € par mois.</p></details>
+    <details><summary>Les pronostics sont-ils garantis ?</summary><p>Non. Ce sont des estimations statistiques, aucun pronostic n’est sûr. Le taux de réussite réel est publié à côté du taux annoncé.</p></details>
+    <div class="warn"><b>Jeu responsable, réservé aux plus de 18 ans.</b> Les paris sportifs comportent des risques : endettement, dépendance. Ne misez que ce que vous pouvez vous permettre de perdre. Aide : Joueurs Info Service, 09 74 75 13 13 (appel non surtaxé).</div>
   </section>
-
-  <section aria-labelledby="methode">
-    <h2 id="methode">Comment on calcule</h2>
-    <div class="grid">
-      <div class="card"><h3>1. Les statistiques</h3><p>Buts ou points attendus de chaque équipe, qualité des tirs (xG), part de chance (PDO), forme, fatigue, absences et gardiens, recalés chaque nuit sur les vrais résultats.</p></div>
-      <div class="card"><h3>2. Les cotes</h3><p>Nos chances sont comparées aux cotes des bookmakers, sans leur marge. On indique la cote à partir de laquelle un pari est rentable sur la durée.</p></div>
-      <div class="card"><h3>3. La recherche web</h3><p>Avant chaque mise à jour, les dernières actus des deux équipes (blessures, repos, contexte) sont lues et pesées, et un pari contredit par une info récente est écarté.</p></div>
-    </div>
-  </section>
-
-  <section aria-labelledby="avis">
-    <h2 id="avis">Vos avis</h2>
-    <p>Vous utilisez NHL Time ? Dites-nous ce qui marche et ce qui manque : seuls de vrais retours d’utilisateurs seront publiés ici. <a href="https://github.com/hatifgang/nhltime/issues/new?title=Mon%20avis%20sur%20NHL%20Time" target="_blank" rel="noopener">Donner mon avis</a></p>
-  </section>
-
-  <section aria-labelledby="faq">
-    <h2 id="faq">Questions fréquentes</h2>
-    <details><summary>Comment sont calculés les pronostics ?</summary><p>Chaque match est modélisé à partir des statistiques des deux équipes (buts ou points attendus, qualité des tirs, chance, forme, absences, fatigue), puis mélangé aux cotes des bookmakers. Une recherche web récente sur les deux équipes complète l’analyse avant chaque mise à jour.</p></details>
-    <details><summary>Les résultats sont-ils vérifiés ?</summary><p>Oui. Chaque pari proposé est enregistré avant le match puis noté automatiquement avec le score officiel. Le taux de réussite réel est affiché à côté du taux annoncé.</p></details>
-    <details><summary>Le site est-il gratuit ?</summary><p>Oui, tout est gratuit et sans inscription. Le site n’est lié à aucun bookmaker.</p></details>
-    <details><summary>Quels sports et championnats sont couverts ?</summary><p>NHL, NBA, KHL, SHL et Liiga ; football : Ligue 1, Premier League, Liga, Serie A, Bundesliga, Saudi Pro League, Ligue des champions, Ligue Europa et Ligue Conférence ; tennis ATP et WTA.</p></details>
-    <details><summary>Un pronostic à 70 % est-il sûr ?</summary><p>Non : il perd en moyenne 3 fois sur 10. Il n’est intéressant que si la cote proposée paie plus que ce risque. C’est pour ça que chaque pari affiche une cote minimale « jouable dès ».</p></details>
-  </section>
-
-  <div class="warn"><b>Jeu responsable, réservé aux plus de 18 ans.</b> Les paris sportifs comportent des risques : endettement, isolement, dépendance. Ne misez que ce que vous pouvez vous permettre de perdre. Besoin d’aide : Joueurs Info Service, 09 74 75 13 13 (appel non surtaxé).</div>
-  <footer>NHL Time · estimations statistiques, pas des certitudes · aucun lien avec un bookmaker · données : NHL, ESPN, sports.ru, ligues officielles, Tennis Abstract, Covers, OLBG.</footer>
-</div>
+  <footer><a href="mentions-legales.html">Mentions légales</a> · <a href="cgv.html">CGV</a> · <a href="confidentialite.html">Confidentialité</a> · Scores : ESPN. Aucun lien avec un bookmaker.</footer>
+</main>
+<nav class="bottom" aria-label="Navigation">
+  <a href="./" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Direct</a>
+  <a href="vip.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>Pronos VIP</a>
+  <a href="mix.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Paris du jour</a>
+  <a href="compte.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Compte</a>
+</nav>
 <script>
-const pct = x => Math.round(x * 100) + ' %';
-const card = (t, n, ok, prevu, note) => `<div class="card"><h3>${t}</h3><div class="stat">${pct(ok / n)} <small>de réussite</small></div><p>${ok} gagnés sur ${n} paris notés · ${pct(prevu)} annoncés${note ? ' · ' + note : ''}</p></div>`;
-(async () => {
-  const get = async u => { try { return await (await fetch(u + '?t=' + Date.now(), { cache: 'no-store' })).json(); } catch (e) { return null; } };
-  const [nhl, nba, eur, foot, mix] = await Promise.all(['api/data.json', 'api/nba/data.json', 'api/europe/data.json', 'api/foot/data.json', 'api/mix.json'].map(get));
-  const out = [];
-  const v = (nhl?.reliability || []).find(r => r.type === 'Vainqueur');
-  if (v?.n) out.push(card('NHL · vainqueurs', v.n, Math.round(v.reussite_fav * v.n), v.prevu_moy));
-  const b = (nba?.reliability || []).find(r => r.type === 'Vainqueur');
-  if (b?.n) out.push(card('NBA · vainqueurs', b.n, b.gagnes, b.prevu));
-  if (eur?.bilan?.total?.n) out.push(card('KHL, SHL, Liiga', eur.bilan.total.n, eur.bilan.total.gagnes, eur.bilan.total.prevu, 'paris à plus de 50 %'));
-  if (foot?.bilan?.total?.n) out.push(card('Football', foot.bilan.total.n, foot.bilan.total.gagnes, foot.bilan.total.prevu));
-  if (mix?.bilan?.n) out.push(`<div class="card"><h3>Combinés à cote 2</h3><div class="stat">${mix.bilan.gagnes}/${mix.bilan.n} <small>gagnés</small></div><p>${mix.bilan.unites > 0 ? '+' : ''}${mix.bilan.unites} unités pour 1 unité misée par combiné</p></div>`);
-  document.getElementById('stats').innerHTML = out.join('') || '<div class="card"><p>Les résultats s’affichent dès les premiers matchs notés.</p></div>';
-})();
+const E = 'https://site.api.espn.com/apis/site/v2/sports';
+const FEEDS = [
+  ['foot','soccer/fra.1'],['foot','soccer/eng.1'],['foot','soccer/esp.1'],['foot','soccer/ita.1'],['foot','soccer/ger.1'],['foot','soccer/ksa.1'],
+  ['foot','soccer/uefa.champions'],['foot','soccer/uefa.europa'],['foot','soccer/uefa.europa.conf'],
+  ['nhl','hockey/nhl'],['nba','basketball/nba'],['tennis','tennis/atp'],['tennis','tennis/wta'],
+];
+const SPORTS = [['all','Tous'],['foot','Foot'],['nhl','NHL'],['nba','NBA'],['tennis','Tennis'],['fav','★ Suivis']];
+const STATES = [['all','Tous'],['in','En direct'],['pre','À venir'],['post','Terminés']];
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ymd = d => `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;   // date locale (Paris)
+let day = new Date(), sport = 'all', state = 'all', DATA = [], timer = null;
+let FAV = new Set(); try { FAV = new Set(JSON.parse(localStorage.getItem('nt-fav') || '[]')); } catch(e) {}
+const saveFav = () => { try { localStorage.setItem('nt-fav', JSON.stringify([...FAV])); } catch(e) {} };
+const hm = iso => new Date(iso).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+
+function dates(){
+  const out = [], base = new Date(); base.setHours(12,0,0,0);
+  for(let i = -7; i <= 7; i++){ const d = new Date(base.getTime() + i*86400000); out.push(d); }
+  $('#dates').innerHTML = out.map(d => { const on = ymd(d) === ymd(day); const lab = ymd(d) === ymd(new Date()) ? 'Auj.' : d.toLocaleDateString('fr-FR',{weekday:'short'}).replace('.',''); return `<button aria-pressed="${on}" data-d="${d.toISOString()}">${lab}<small>${d.getDate()}/${d.getMonth()+1}</small></button>`; }).join('');
+  $('#dates').querySelector('[aria-pressed=true]')?.scrollIntoView({inline:'center', block:'nearest'});
+}
+function parse(sp, d){
+  const comp = d.leagues?.[0] || {}, out = [];
+  for(const e of d.events || []){
+    const base = { sport: sp, comp: e.name && sp === 'tennis' ? e.name : (comp.name || comp.abbreviation), logo: comp.logos?.[0]?.href || '' };
+    const push = (c, extra) => {
+      const st = c.status?.type || e.status?.type || {}, [a, b] = c.competitors || [];
+      if(!a || !b) return;
+      const side = x => ({ name: x.team?.shortDisplayName || x.team?.displayName || x.athlete?.displayName || '?', logo: x.team?.logo || x.athlete?.flag?.href || '', score: x.score, win: !!x.winner, sets: (x.linescores||[]).map(l => l.value) });
+      const H = sp === 'tennis' ? side(a) : side(c.competitors.find(x => x.homeAway === 'home') || a), A = sp === 'tennis' ? side(b) : side(c.competitors.find(x => x.homeAway === 'away') || b);
+      out.push({ ...base, ...extra, id: `${sp}:${c.id || e.id}`, date: c.date || e.date, state: st.state || 'pre', detail: st.shortDetail || '', clock: c.status?.displayClock, H, A });
+    };
+    if(sp === 'tennis') for(const g of e.groupings || []) for(const c of g.competitions || []) push(c, { comp: `${e.name} · ${g.grouping?.displayName || ''}`.replace(/ · $/, '') });
+    else push(e.competitions?.[0] || {}, {});
+  }
+  return out;
+}
+async function load(){
+  const d = ymd(day);
+  // ESPN date les matchs à l'heure américaine : on lit aussi la veille et on garde ceux qui tombent ce jour-là à l'heure de Paris
+  const prev = ymd(new Date(day.getTime() - 86400000));
+  const jobs = FEEDS.flatMap(([sp, path]) => [d, prev].map(dd => [sp, path, dd]));
+  const res = await Promise.all(jobs.map(async ([sp, path, dd]) => { try { const r = await fetch(`${E}/${path}/scoreboard?dates=${dd}`); return parse(sp, await r.json()); } catch(e) { return []; } }));
+  const seen = new Set();
+  DATA = res.flat().filter(m => (ymd(new Date(m.date)) === d || (m.state === 'in' && d === ymd(new Date()))) && !seen.has(m.id) && seen.add(m.id));
+  render();
+  clearTimeout(timer);
+  if(DATA.some(m => m.state === 'in') || d === ymd(new Date())) timer = setTimeout(load, 30000);
+}
+function status(m){
+  if(m.state === 'in') return `<div class="st live">${esc(m.sport === 'foot' ? (m.clock || m.detail) : m.detail)}</div>`;
+  if(m.state === 'post') return `<div class="st">${/postponed|canceled/i.test(m.detail) ? 'Reporté' : 'Fin'}</div>`;
+  return `<div class="st">${hm(m.date)}</div>`;
+}
+function score(m){
+  if(m.state === 'pre') return '<div class="sc"></div>';
+  if(m.sport === 'tennis') return `<div class="sc"><div class="sets">${m.H.sets.join(' ')}</div><div class="sets">${m.A.sets.join(' ')}</div></div>`;
+  return `<div class="sc"><div>${esc(m.H.score ?? '')}</div><div>${esc(m.A.score ?? '')}</div></div>`;
+}
+function render(){
+  const bySport = s => DATA.filter(m => s === 'all' || (s === 'fav' ? FAV.has(m.id) : m.sport === s));
+  $('#sports').innerHTML = SPORTS.map(([k,l]) => `<button aria-pressed="${sport===k}" data-s="${k}">${l}<span class="n">${bySport(k).length}</span></button>`).join('');
+  const L1 = bySport(sport);
+  $('#states').innerHTML = STATES.map(([k,l]) => `<button aria-pressed="${state===k}" data-t="${k}">${l}<span class="n">${L1.filter(m => k==='all' || m.state===k).length}</span></button>`).join('');
+  const L = L1.filter(m => state === 'all' || m.state === state).sort((a,b) => (a.state==='in'?0:1)-(b.state==='in'?0:1) || Date.parse(a.date)-Date.parse(b.date));
+  if(!L.length){ $('#list').innerHTML = `<div class="empty">${sport==='fav' ? 'Touche l’étoile d’un match pour le suivre.' : 'Aucun match pour ce choix.'}</div>`; return; }
+  const groups = new Map();
+  for(const m of L){ const k = `${m.sport}|${m.comp}`; if(!groups.has(k)) groups.set(k, []); groups.get(k).push(m); }
+  const SN = {foot:'Foot', nhl:'NHL', nba:'NBA', tennis:'Tennis'};
+  $('#list').innerHTML = [...groups.values()].map(ms => `<section class="comp"><h2>${ms[0].logo ? `<img src="${esc(ms[0].logo)}" alt="" loading="lazy">` : ''}${esc(ms[0].comp)}<span class="sport">${SN[ms[0].sport]}</span></h2>
+    ${ms.map(m => `<div class="m">${status(m)}<div class="teams"><div class="t ${m.state==='post'&&m.H.win?'win':''}">${m.H.logo?`<img src="${esc(m.H.logo)}" alt="" loading="lazy">`:''}${esc(m.H.name)}</div><div class="t ${m.state==='post'&&m.A.win?'win':''}">${m.A.logo?`<img src="${esc(m.A.logo)}" alt="" loading="lazy">`:''}${esc(m.A.name)}</div></div>${score(m)}<button class="star" aria-label="Suivre ce match" aria-pressed="${FAV.has(m.id)}" data-f="${esc(m.id)}">★</button></div>`).join('')}</section>`).join('');
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  if(b.dataset.d){ day = new Date(b.dataset.d); dates(); $('#list').innerHTML = '<div class="empty">Chargement des matchs…</div>'; load(); }
+  else if(b.dataset.s){ sport = b.dataset.s; render(); }
+  else if(b.dataset.t){ state = b.dataset.t; render(); }
+  else if(b.dataset.f){ const id = b.dataset.f; FAV.has(id) ? FAV.delete(id) : FAV.add(id); saveFav(); render(); }
+});
+dates(); load();
 </script>
 </body>
 </html>

@@ -140,13 +140,16 @@ footer{margin-top:28px;padding-top:12px;border-top:1px solid var(--line);font-si
       <h1><small id="h-eyebrow">Aide à la décision · Ligue 1, Premier League, Liga, Serie A, Bundesliga, Saudi, coupes d’Europe</small><span id="h-title">Football</span></h1>
       <div class="meta" id="h-meta"></div>
     </div>
-    <div class="status"><nav class="league" aria-label="Championnat"><a href="./">Accueil</a><a href="nhl.html">NHL</a><a href="nba.html">NBA</a><a href="hockey.html">KHL / Europe</a><a href="foot.html" aria-current="page">Foot</a><a href="tennis.html">Tennis</a><a href="mix.html">Combinés</a></nav><span>Dernier passage</span><b id="h-mode"></b><span>Automatique vers 7 h, 14 h et 16 h 30 (Paris), même PC éteint</span><div class="runbar"><button type="button" class="run">Lancer l’analyse</button><button type="button" class="ghost" id="xls">Excel</button></div><span id="run-msg" role="status"></span></div>
+    <div class="status"><nav class="league" aria-label="Championnat"><a href="./">Accueil</a><a href="nhl.html">NHL</a><a href="nba.html">NBA</a><a href="hockey.html">KHL / Europe</a><a href="foot.html" aria-current="page">Foot</a><a href="tennis.html">Tennis</a><a href="mix.html">Paris du jour</a><a href="compte.html">Compte</a></nav><span>Dernier passage</span><b id="h-mode"></b><span>Automatique vers 7 h, 14 h et 16 h 30 (Paris), même PC éteint</span><div class="runbar"><button type="button" class="run">Lancer l’analyse</button><button type="button" class="ghost" id="xls">Excel</button></div><span id="run-msg" role="status"></span></div>
   </header>
   <nav class="tabs" role="tablist" id="tabs"></nav>
   <main id="panels"></main>
   <footer id="foot"></footer>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js" onerror="void 0"></script>
+<script src="js/nt.js"></script>
 <script>
 let D = null;
 (() => { const n = document.getElementById('tabs'); if(!n) return;
@@ -295,7 +298,7 @@ function exportXlsx(){
   XLSX.writeFile(wb, `Football_${D.meta.soiree}.xlsx`);
 }
 async function load(){
-  try{ D = await (await fetch('api/foot/data.json?t='+Date.now(),{cache:'no-store'})).json(); }catch(e){ D = null; }
+  D = await NT.page('foot', 'foot', 'api/foot/data.json'); if(D === NT.BLOCKED) return;
   if(!D){ $('#panels').innerHTML = '<div class="empty">Aucune analyse enregistrée. Appuie sur « Lancer l’analyse ».</div>'; return; }
   init();
 }

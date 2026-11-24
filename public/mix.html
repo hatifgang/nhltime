@@ -138,14 +138,11 @@ footer{margin-top:28px;padding-top:12px;border-top:1px solid var(--line);font-si
       <h1><small>Aide à la décision · NHL, NBA, KHL</small><span>Combinés du public</span></h1>
       <div class="meta" id="h-meta"></div>
     </div>
-    <div class="status"><nav class="league" aria-label="Championnat"><a href="./">Accueil</a><a href="nhl.html">NHL</a><a href="nba.html">NBA</a><a href="hockey.html">KHL / Europe</a><a href="foot.html">Foot</a><a href="tennis.html">Tennis</a><a href="mix.html" aria-current="page">Paris du jour</a><a href="compte.html">Compte</a></nav><span>Mis à jour à chaque analyse automatique</span></div>
+    <div class="status"><nav class="league" aria-label="Championnat"><a href="./">Direct</a><a href="pronos.html">Pronos</a><a href="nhl.html">NHL</a><a href="nba.html">NBA</a><a href="hockey.html">KHL / Europe</a><a href="foot.html">Foot</a><a href="tennis.html">Tennis</a><a href="mix.html" aria-current="page">Paris du jour</a></nav><span>Mis à jour à chaque analyse automatique</span></div>
   </header>
   <main id="panels"></main>
   <footer id="foot">Estimations statistiques, pas des certitudes. Un combiné perd dès qu’une seule sélection perd. Comparez toujours avec les cotes de votre opérateur et misez de façon responsable, uniquement ce que vous pouvez vous permettre de perdre.</footer>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js"></script>
-<script src="config.js" onerror="void 0"></script>
-<script src="js/nt.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -167,8 +164,8 @@ function webView(W){
       <details><summary class="sub">Derniers titres de presse</summary><div class="sub">${esc(m.nom_dom)}</div><ul>${news(m.actus_dom)}</ul><div class="sub">${esc(m.nom_ext)}</div><ul>${news(m.actus_ext)}</ul></details></article>`).join('')}</div>`;
 }
 async function load(){
-  const D = await NT.page('paris_du_jour', 'mix', 'api/mix.json'); if(D === NT.BLOCKED) return;
-  const W = await NT.page('paris_du_jour', 'recherche', 'api/recherche.json');
+  const D = await fetch('api/mix.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).catch(()=>null);
+  const W = await fetch('api/recherche.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).catch(()=>null);
   if(!D){ $('#panels').innerHTML = '<div class="empty">Pas encore de données : elles arrivent à la prochaine analyse automatique.</div>'; return; }
   $('#h-meta').textContent = 'Calculé le ' + new Date(D.genere).toLocaleString('fr-FR', {dateStyle:'short', timeStyle:'short'});
   const B = D.bilan;

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pronostics gratuits NHL, NBA, foot, tennis · NHL Time</title>
+<meta name="description" content="Pronostics gratuits et vérifiés : NHL et hockey européen, NBA, foot, tennis et combinés du jour. Taux de réussite réels publiés.">
+<link rel="canonical" href="https://hatifgang.github.io/nhltime/pronos.html">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/nt.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="bar"><a class="brand" href="./">NHL<span>Time</span></a><nav class="top-links"><a href="./">Direct</a><a href="mix.html">Paris du jour</a></nav></header>
+  <h1>Pronostics du jour</h1>
+  <p class="sub">Probabilités calculées à partir des statistiques et des cotes, recherche web avant chaque mise à jour, chaque prono noté après le match.</p>
+  <div id="app"></div>
+  <h2>Nos résultats vérifiés</h2>
+  <div id="stats" class="card sub">Chargement…</div>
+  <h2>Le prono du jour</h2>
+  <div id="free" class="card sub">Chargement…</div>
+  <footer><a href="mentions-legales.html">Mentions légales</a> · <a href="confidentialite.html">Confidentialité</a> · Estimations statistiques, aucun gain garanti. Jeu interdit aux mineurs. Joueurs Info Service : 09 74 75 13 13.</footer>
+</div>
+<nav class="bottom" aria-label="Navigation">
+  <a href="./"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Direct</a>
+  <a href="pronos.html" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>Pronos</a>
+  <a href="mix.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Paris du jour</a>
+  <a href="foot.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 4.5h-5L8 10z"/></svg>Foot</a>
+</nav>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pct = x => Math.round(x * 100) + ' %';
+const CATS = [
+  ['Hockey', 'NHL + KHL, SHL, Liiga', [['NHL', 'nhl.html'], ['KHL / Europe', 'hockey.html']]],
+  ['Basket', 'NBA', [['NBA', 'nba.html']]],
+  ['Foot', 'Ligue 1, Premier League, Liga, Serie A, Bundesliga, Saudi, coupes d’Europe', [['Foot', 'foot.html']]],
+  ['Tennis', 'ATP et WTA', [['Tennis', 'tennis.html']]],
+  ['Paris du jour', 'Combinés tous sports à cote 2, recherche web par match', [['Voir', 'mix.html']]],
+];
+$('#app').innerHTML = CATS.map(([n, d, L]) => `<div class="card" style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap"><div><b style="font-family:var(--f-display);font-size:1.25rem">${n}</b><div class="sub">${d}</div></div><div>${L.map(([t, h]) => `<a class="btn small" href="${h}">${t}</a>`).join(' ')}</div></div>`).join('');
+(async () => {
+  let A = null; try { A = await (await fetch('api/apercu.json?t=' + Date.now(), { cache: 'no-store' })).json(); } catch (e) {}
+  const S = A?.stats || [];
+  $('#stats').innerHTML = S.length ? S.map(s => `<div><b>${esc(s.nom)}</b> : ${s.gagnes}/${s.n} gagnés (${pct(s.gagnes / s.n)})${s.prevu != null ? ` pour ${pct(s.prevu)} annoncés` : ''}</div>`).join('') + '<p class="sub">Chaque prono est enregistré avant le match puis noté avec le score officiel.</p>' : 'Les résultats apparaissent dès les premiers matchs notés.';
+  const F = A?.gratuit;
+  $('#free').innerHTML = F ? `<b>${esc(F.label)}</b> · ${esc(F.sport)} · ${esc(F.match)} · ${esc(F.heure || '')}<div>Chances : <b>${pct(F.prob)}</b> · jouable dès la cote ${F.cote_min}</div>` : 'Pas de prono mis en avant pour l’instant.';
+})();
+</script>
+</body>
+</html>

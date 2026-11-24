@@ -140,16 +140,13 @@ footer{margin-top:28px;padding-top:12px;border-top:1px solid var(--line);font-si
       <h1><small id="h-eyebrow">Aide à la décision · NBA</small><span id="h-title">Soirée NBA</span></h1>
       <div class="meta" id="h-meta"></div>
     </div>
-    <div class="status"><nav class="league" aria-label="Championnat"><a href="./">Accueil</a><a href="nhl.html">NHL</a><a href="nba.html" aria-current="page">NBA</a><a href="hockey.html">KHL / Europe</a><a href="foot.html">Foot</a><a href="tennis.html">Tennis</a><a href="mix.html">Paris du jour</a><a href="compte.html">Compte</a></nav><span>Dernier passage</span><b id="h-mode"></b><span>Automatique vers 9 h, 17 h 30 et 23 h 30 (Paris), même PC éteint</span><div class="runbar"><button type="button" class="run" data-mode="update">Lancer MISE À JOUR</button><button type="button" class="run" data-mode="prematch">Lancer PRÉ-MATCH</button><button type="button" class="ghost" id="xls">Excel</button></div><span id="run-msg" role="status"></span></div>
+    <div class="status"><nav class="league" aria-label="Championnat"><a href="./">Direct</a><a href="pronos.html">Pronos</a><a href="nhl.html">NHL</a><a href="nba.html" aria-current="page">NBA</a><a href="hockey.html">KHL / Europe</a><a href="foot.html">Foot</a><a href="tennis.html">Tennis</a><a href="mix.html">Paris du jour</a></nav><span>Dernier passage</span><b id="h-mode"></b><span>Automatique vers 9 h, 17 h 30 et 23 h 30 (Paris), même PC éteint</span><div class="runbar"><button type="button" class="run" data-mode="update">Lancer MISE À JOUR</button><button type="button" class="run" data-mode="prematch">Lancer PRÉ-MATCH</button><button type="button" class="ghost" id="xls">Excel</button></div><span id="run-msg" role="status"></span></div>
   </header>
   <nav class="tabs" role="tablist" id="tabs"></nav>
   <main id="panels"></main>
   <footer id="foot"></footer>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js"></script>
-<script src="config.js" onerror="void 0"></script>
-<script src="js/nt.js"></script>
 <script>
 let D = null;
 (() => { const n = document.getElementById('tabs'); if(!n) return;
@@ -540,7 +537,7 @@ async function launch(mode){ ghLaunch(mode==='prematch'?'nba-prematch':'nba-upda
 async function exportXlsx(){
   const msg = $('#run-msg'); msg.textContent = 'Préparation du fichier Excel…';
   try{
-    const db = await NT.page('nba', 'historique', 'api/nba/history.json');
+    const db = await fetch('api/nba/history.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).catch(()=>null);
     const wb = XLSX.utils.book_new();
     const sheet = (name, rows, cols) => { const data = (rows||[]).map(r=>Object.fromEntries(cols.map(c=>[c, Array.isArray(r[c]) ? r[c].join('; ') : (r[c] && typeof r[c]==='object') ? JSON.stringify(r[c]) : r[c]]))); const ws = XLSX.utils.json_to_sheet(data, {header: cols}); ws['!cols'] = cols.map(c=>({wch: Math.max(10, c.length+2)})); XLSX.utils.book_append_sheet(wb, ws, name); };
     sheet('Résultats', db.results, ['date','match','vainqueur','mode','score','ecart','quarts','lieu','meilleurs','faits','source']);
@@ -555,7 +552,7 @@ async function exportXlsx(){
   }catch(e){ msg.textContent = 'Export impossible pour le moment.'; }
 }
 async function load(){
-  D = await NT.page('nba', 'nba', 'api/nba/data.json'); if(D === NT.BLOCKED) return;
+  D = await fetch('api/nba/data.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).catch(()=>null);
   if(!D){ $('#panels').innerHTML = '<div class="empty">Aucune analyse NBA enregistrée pour l’instant. Appuie sur « Lancer PRÉ-MATCH » pour démarrer.</div>'; return; }
   const tabSel = document.querySelector('#tabs [aria-selected="true"]')?.id?.slice(2);
   init();

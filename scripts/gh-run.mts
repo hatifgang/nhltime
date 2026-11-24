@@ -57,9 +57,6 @@ fs.cpSync(path.resolve('public'), S, { recursive: true });
 fs.writeFileSync(path.join(S, '.nojekyll'), '');
 const nhlL = rd('latest.json'), nbaL = rd('nba_latest.json'), eurL = rd('europe_latest.json'), footL = rd('foot_latest.json'), tenL = rd('tennis_latest.json');
 const ndb = rd('nba_db.json'); if (ndb) delete ndb.boxes;   // boîtes de score brutes : trop lourdes pour l'Excel
-// historique NHL allégé pour l'Excel (60 derniers jours)
-const hdb = rd('db.json'); const cut = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
-if (hdb) for (const k of Object.keys(hdb)) if (Array.isArray(hdb[k])) hdb[k] = hdb[k].filter((x: any) => !x?.date || String(x.date) >= cut);
 
 // aperçu public : vrais résultats et 1 prono gratuit
 const stats: any[] = [];
@@ -73,24 +70,8 @@ const cands = [...(footL?.picks || []).map((x: any) => ({ ...x, sport: x.lg })),
 const g = cands[0];
 wr('apercu.json', { genere: new Date().toISOString(), stats: stats.filter(x => x.prevu != null || x.n), gratuit: g ? { label: g.label, sport: g.sport, match: g.match, heure: g.heure, prob: g.prob, cote_min: g.cote_min } : null });
 
-const { sbOn, vipUpsert, sbUrl } = await import('./sb.mts');
-if (sbOn()) {
-  // abonnements actifs : contenu VIP dans Supabase (lu seulement par les abonnés), rien en clair sur le site
-  try {
-    await vipUpsert([
-      { categorie: 'nhl', cle: 'nhl', contenu: nhlL }, { categorie: 'nhl', cle: 'historique', contenu: hdb }, { categorie: 'nhl', cle: 'europe', contenu: eurL },
-      { categorie: 'nba', cle: 'nba', contenu: nbaL }, { categorie: 'nba', cle: 'historique', contenu: ndb },
-      { categorie: 'foot', cle: 'foot', contenu: footL }, { categorie: 'tennis', cle: 'tennis', contenu: tenL },
-      { categorie: 'paris_du_jour', cle: 'mix', contenu: mix }, { categorie: 'paris_du_jour', cle: 'recherche', contenu: research },
-    ]);
-    console.log('contenu VIP envoyé à Supabase');
-  } catch (e: any) { console.error('ÉCHEC envoi VIP :', String(e?.message || e).replace(/https?:\/\/\S+/g, '[adresse]')); }
-  fs.writeFileSync(path.join(S, 'config.js'), `window.NT_CONFIG = ${JSON.stringify({ url: sbUrl(), anon: (process.env.SUPABASE_ANON_KEY || '').trim() })};\n`);
-} else {
-  // pas encore de Supabase : le site reste ouvert à tous, comme avant
-  wr('data.json', nhlL); wr('history.json', rd('db.json')); wr('mescotes.json', rd('mescotes.json') || {});
-  wr('nba/data.json', nbaL); wr('nba/history.json', ndb); wr('europe/data.json', eurL);
-  wr('mix.json', mix); wr('recherche.json', research); wr('foot/data.json', footL); wr('tennis/data.json', tenL);
-}
+wr('data.json', nhlL); wr('history.json', rd('db.json')); wr('mescotes.json', rd('mescotes.json') || {});
+wr('nba/data.json', nbaL); wr('nba/history.json', ndb); wr('europe/data.json', eurL);
+wr('mix.json', mix); wr('recherche.json', research); wr('foot/data.json', footL); wr('tennis/data.json', tenL);
 console.log('site construit :', fs.readdirSync(path.join(S, 'api')).join(', '));
 if (fail) console.log(`${fail} analyse(s) en échec : le site est quand même reconstruit avec les dernières données.`);

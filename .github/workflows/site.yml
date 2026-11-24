@@ -32,12 +32,7 @@ jobs:
           node-version: 24
       - run: npm install --no-audit --no-fund
       - name: Récupérer les données
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: |
-          # stockage privé Supabase si configuré ; sinon (ou s'il est encore vide) la branche « data »
-          node --experimental-strip-types --no-warnings scripts/sb.mts pull data || { rm -rf data; git clone --quiet --depth 1 --branch data "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" data || mkdir -p data; }
+        run: git clone --quiet --depth 1 --branch data "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" data || mkdir -p data
       - name: Analyses
         env:
           SCHED: ${{ github.event.schedule }}
@@ -50,16 +45,9 @@ jobs:
             *) T="$TACHES" ;;
           esac
           echo "Tâches : $T"
-          NHL_LOCAL_STORE="$PWD/data" SUPABASE_URL="${{ secrets.SUPABASE_URL }}" SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}" SUPABASE_SERVICE_KEY="${{ secrets.SUPABASE_SERVICE_KEY }}" GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" GROQ_API_KEY="${{ secrets.GROQ_API_KEY }}" node --experimental-strip-types --no-warnings scripts/gh-run.mts $T
+          NHL_LOCAL_STORE="$PWD/data" GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" GROQ_API_KEY="${{ secrets.GROQ_API_KEY }}" node --experimental-strip-types --no-warnings scripts/gh-run.mts $T
       - name: Sauvegarder les données
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
-          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_SERVICE_KEY" ]; then
-            node --experimental-strip-types --no-warnings scripts/sb.mts push data
-            exit 0
-          fi
           cd data && rm -rf .git && git init -q -b data
           git add -A
           git -c user.name="nhltime-bot" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "données $(date -u +%F_%H%M)"

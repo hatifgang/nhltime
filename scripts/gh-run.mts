@@ -73,7 +73,7 @@ const cands = [...(footL?.picks || []).map((x: any) => ({ ...x, sport: x.lg })),
 const g = cands[0];
 wr('apercu.json', { genere: new Date().toISOString(), stats: stats.filter(x => x.prevu != null || x.n), gratuit: g ? { label: g.label, sport: g.sport, match: g.match, heure: g.heure, prob: g.prob, cote_min: g.cote_min } : null });
 
-const { sbOn, vipUpsert } = await import('./sb.mts');
+const { sbOn, vipUpsert, sbUrl } = await import('./sb.mts');
 if (sbOn()) {
   // abonnements actifs : contenu VIP dans Supabase (lu seulement par les abonnés), rien en clair sur le site
   try {
@@ -85,7 +85,7 @@ if (sbOn()) {
     ]);
     console.log('contenu VIP envoyé à Supabase');
   } catch (e: any) { console.error('ÉCHEC envoi VIP :', e?.message || e); }
-  fs.writeFileSync(path.join(S, 'config.js'), `window.NT_CONFIG = ${JSON.stringify({ url: process.env.SUPABASE_URL, anon: process.env.SUPABASE_ANON_KEY || '' })};\n`);
+  fs.writeFileSync(path.join(S, 'config.js'), `window.NT_CONFIG = ${JSON.stringify({ url: sbUrl(), anon: (process.env.SUPABASE_ANON_KEY || '').trim() })};\n`);
 } else {
   // pas encore de Supabase : le site reste ouvert à tous, comme avant
   wr('data.json', nhlL); wr('history.json', rd('db.json')); wr('mescotes.json', rd('mescotes.json') || {});

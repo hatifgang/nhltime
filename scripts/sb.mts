@@ -4,7 +4,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const URL_ = process.env.SUPABASE_URL || '', KEY = process.env.SUPABASE_SERVICE_KEY || '';
+/** Adresse du projet, quelle que soit la façon dont elle a été collée (avec ou sans https://, identifiant seul, / final, /rest/v1). */
+export function sbUrl(v = process.env.SUPABASE_URL || '') {
+  let u = v.trim().replace(/^["']|["']$/g, '').replace(/\/+$/, '').replace(/\/(rest|auth|storage)\/v1.*$/, '');
+  if (!u) return '';
+  if (!/^https?:\/\//.test(u)) u = u.includes('.') ? `https://${u}` : `https://${u}.supabase.co`;
+  return u;
+}
+const URL_ = sbUrl(), KEY = (process.env.SUPABASE_SERVICE_KEY || '').trim();
 export const sbOn = () => !!(URL_ && KEY);
 const H = (extra: Record<string, string> = {}) => ({ apikey: KEY, Authorization: `Bearer ${KEY}`, ...extra });
 

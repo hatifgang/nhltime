@@ -2,7 +2,8 @@
 // config.js (créé à la mise en ligne) définit window.NT_CONFIG = { url, anon, paiement }. Sans config : mode public (données ouvertes).
 window.NT = (() => {
   const C = window.NT_CONFIG || {};
-  const sb = C.url && C.anon && window.supabase ? window.supabase.createClient(C.url, C.anon) : null;
+  let sb = null;
+  try { sb = C.url && C.anon && window.supabase ? window.supabase.createClient(C.url, C.anon) : null; } catch (e) { console.error('Supabase : configuration invalide', e); }
   const CATS = [
     { id: 'nhl', nom: 'Hockey', detail: 'NHL + KHL, SHL, Liiga', pages: ['nhl.html', 'hockey.html'] },
     { id: 'nba', nom: 'Basket', detail: 'NBA', pages: ['nba.html'] },

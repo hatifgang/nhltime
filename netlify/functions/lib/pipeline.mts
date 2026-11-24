@@ -738,7 +738,8 @@ async function buildEvening(ctx: Ctx, db: any, params: Params, mode: string) {
           tirs_ce_soir: r3(lamShots(p), 2),
           p_tirs2: r3(calibrate(CAL.tirs2, pAtLeastK(lamShots(p), 2, params.rs))),
           p_tirs3: r3(calibrate(CAL.tirs3, pAtLeastK(lamShots(p), 3, params.rs))),
-          p_point2: r3(pAtLeastK(lamPts(p) * params.ap, 2, params.rp)),
+          // 2 points ou plus : recalé sur 208 sélections notées (annoncé 41 % pour 34 % réels) → échelle 0,9 et dispersion plus forte (paquets de points)
+          p_point2: r3(pAtLeastK(lamPts(p) * params.ap * 0.9, 2, Math.min(params.rp, 2))),
           p_but2: r3(pAtLeastK(p.g_rate * teamF / params.xg * ppm(p) * params.ag, 2, Math.min(params.rg, 4))),   // doublés : dispersion plus forte mesurée sur les feuilles de match
           tirs_concedes_adv: r3(saOf(opp), 1),
           cote_but: null, cote_point: null, imp_but: null, imp_point: null, valeur_but: null, valeur_point: null,

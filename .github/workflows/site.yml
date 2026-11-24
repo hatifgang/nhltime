@@ -4,13 +4,13 @@ name: Analyses et site
 on:
   schedule:
     - cron: '0 7 * * *'      # MISE À JOUR NHL + NBA (8 h Paris)
-    - cron: '10 6,13 * * *'  # KHL / Europe (7 h 10 et 14 h 10 Paris)
+    - cron: '10 6,13 * * *'  # KHL / Europe, foot, tennis (7 h 10 et 14 h 10 Paris)
     - cron: '30 15,21 * * *' # PRÉ-MATCH NHL + NBA (16 h 30 et 22 h 30 Paris)
   workflow_dispatch:
     inputs:
       taches:
-        description: 'Tâches (nhl-update nhl-prematch nba-update nba-prematch europe)'
-        default: 'nhl-prematch nba-prematch europe'
+        description: 'Tâches (nhl-update nhl-prematch nba-update nba-prematch europe foot tennis)'
+        default: 'nhl-prematch nba-prematch europe foot tennis'
 permissions:
   contents: write
   pages: write
@@ -39,9 +39,9 @@ jobs:
           TACHES: ${{ inputs.taches }}
         run: |
           case "$SCHED" in
-            '0 7 * * *') T="nhl-update nba-update" ;;
-            '10 6,13 * * *') T="europe" ;;
-            '30 15,21 * * *') T="nhl-prematch nba-prematch" ;;
+            '0 7 * * *') T="nhl-update nba-update foot tennis" ;;
+            '10 6,13 * * *') T="europe foot tennis" ;;
+            '30 15,21 * * *') T="nhl-prematch nba-prematch foot" ;;
             *) T="$TACHES" ;;
           esac
           echo "Tâches : $T"

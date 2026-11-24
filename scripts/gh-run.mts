@@ -7,6 +7,8 @@ process.env.NHL_LOCAL_STORE ||= path.resolve('data');
 const { runPipeline } = await import('../netlify/functions/lib/pipeline.mts');
 const { runNba } = await import('../netlify/functions/lib/nba/pipeline.mts');
 const { runEurope } = await import('../netlify/functions/lib/europe/pipeline.mts');
+const { runFoot } = await import('../netlify/functions/lib/foot/pipeline.mts');
+const { runTennis } = await import('../netlify/functions/lib/tennis/pipeline.mts');
 
 const trigger = process.env.GITHUB_EVENT_NAME === 'workflow_dispatch' ? 'bouton' : 'automatique';
 const tasks: Record<string, () => Promise<any>> = {
@@ -15,6 +17,8 @@ const tasks: Record<string, () => Promise<any>> = {
   'nba-update': () => runNba('update', { trigger }),
   'nba-prematch': () => runNba('prematch', { trigger }),
   'europe': () => runEurope({ trigger }),
+  'foot': () => runFoot({ trigger }),
+  'tennis': () => runTennis({ trigger }),
 };
 let fail = 0;
 for (const t of process.argv.slice(2)) {
@@ -49,5 +53,7 @@ const ndb = rd('nba_db.json'); if (ndb) delete ndb.boxes;   // boîtes de score 
 wr('nba/history.json', ndb);
 wr('europe/data.json', rd('europe_latest.json'));
 wr('mix.json', mix);
+wr('foot/data.json', rd('foot_latest.json'));
+wr('tennis/data.json', rd('tennis_latest.json'));
 console.log('site construit :', fs.readdirSync(path.join(S, 'api')).join(', '));
 if (fail) console.log(`${fail} analyse(s) en échec : le site est quand même reconstruit avec les dernières données.`);

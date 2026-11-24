@@ -45,7 +45,7 @@ jobs:
             *) T="$TACHES" ;;
           esac
           echo "Tâches : $T"
-          NHL_LOCAL_STORE="$PWD/data" node --experimental-strip-types --no-warnings scripts/gh-run.mts $T
+          NHL_LOCAL_STORE="$PWD/data" GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" GROQ_API_KEY="${{ secrets.GROQ_API_KEY }}" node --experimental-strip-types --no-warnings scripts/gh-run.mts $T
       - name: Sauvegarder les données
         run: |
           cd data && rm -rf .git && git init -q -b data

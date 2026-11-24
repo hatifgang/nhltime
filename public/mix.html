@@ -154,8 +154,18 @@ function card(c, i){
     <div class="chips"><span class="chip">Mes chances que tout passe : ${pct(c.prob)}</span>${v}<span class="chip">Soutien moyen : ${c.foule} %</span></div>
     <ul>${c.legs.map(l => `<li><b>${esc(l.label)}</b> — ${esc(l.sport)} · ${esc(l.match)} · ${esc(l.heure)}<br><span class="sub">Cote ${l.cote} · mes chances ${pct(l.p)} · joué par : ${esc(l.foule)}</span></li>`).join('')}</ul></article>`;
 }
+function webView(W){
+  if(!W || !(W.matchs||[]).length) return '';
+  const ul = xs => xs && xs.length ? `<ul>${xs.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>` : '<div class="sub">—</div>';
+  const news = xs => (xs||[]).slice(0,3).map(h=>`<li><a href="${esc(h.lien)}" target="_blank" rel="noopener">${esc(h.titre)}</a> <span class="sub">${esc(h.date)}</span></li>`).join('');
+  return `<h2>Recherche web avant de parier</h2><p class="sub">${W.moteur ? `Analyse : ${esc(W.moteur)}. L’IA pèse le pour et le contre ; son ajustement est indicatif et mesuré à part.` : 'Pas encore de clé d’IA configurée : seulement les derniers titres de presse de chaque équipe (Google News).'}</p>
+    <div class="picks">${W.matchs.map(m=>`<article class="pick"><div class="top"><div class="who"><b>${esc(m.match)}</b> <span class="sub">${esc(m.sport)} · ${esc(m.heure)}</span></div>${m.ia?`<span class="chip ${m.ia.ajustement_dom>0?'good':m.ia.ajustement_dom<0?'bad':''}">${esc(m.dom)} ${m.ia.ajustement_dom>0?'+':''}${m.ia.ajustement_dom} pts</span>`:''}</div>
+      ${m.ia?`<div><b>${esc(m.ia.verdict)}</b> <span class="sub">(confiance ${esc(m.ia.confiance||'?')})</span></div><div class="sub">Pour ${esc(m.dom)}</div>${ul(m.ia.pour_dom)}<div class="sub">Pour ${esc(m.ext)}</div>${ul(m.ia.pour_ext)}${(m.ia.absences||[]).length?`<div class="sub">Absences</div>${ul(m.ia.absences)}`:''}`:''}
+      <details><summary class="sub">Derniers titres de presse</summary><div class="sub">${esc(m.nom_dom)}</div><ul>${news(m.actus_dom)}</ul><div class="sub">${esc(m.nom_ext)}</div><ul>${news(m.actus_ext)}</ul></details></article>`).join('')}</div>`;
+}
 async function load(){
-  let D = null; try{ D = await (await fetch('api/mix.json?t=' + Date.now(), {cache:'no-store'})).json(); }catch(e){}
+  let D = null, W = null; try{ D = await (await fetch('api/mix.json?t=' + Date.now(), {cache:'no-store'})).json(); }catch(e){}
+  try{ W = await (await fetch('api/recherche.json?t=' + Date.now(), {cache:'no-store'})).json(); }catch(e){}
   if(!D){ $('#panels').innerHTML = '<div class="empty">Pas encore de données : elles arrivent à la prochaine analyse automatique.</div>'; return; }
   $('#h-meta').textContent = 'Calculé le ' + new Date(D.genere).toLocaleString('fr-FR', {dateStyle:'short', timeStyle:'short'});
   const B = D.bilan;
@@ -165,6 +175,8 @@ async function load(){
     ${D.combos.length ? `<div class="picks">${D.combos.map(card).join('')}</div>` : '<div class="empty">Pas assez de sélections soutenues par le public et sûres selon moi pour faire un combiné à cote 2 en ce moment. Les cotes et les pourcentages du public arrivent dans la journée : regarde après la prochaine analyse.</div>'}
     <h2>Toutes les sélections jouées par les autres (et validées par mes chiffres)</h2>
     ${D.legs.length ? `<div class="picks">${D.legs.map(l => `<article class="pick"><div class="top"><div class="who"><b>${esc(l.label)}</b> <span class="sub">${esc(l.sport)} · ${esc(l.match)} · ${esc(l.heure)}</span></div><span class="big">${pct(l.p)}</span></div><div class="sub">Cote ${l.cote} · ${esc(l.foule)}</div></article>`).join('')}</div>` : '<div class="empty">Aucune pour le moment.</div>'}
+    ${(D.ecartees||[]).length ? `<h2>Écartées par la recherche web</h2><div class="picks">${D.ecartees.map(l => `<article class="pick"><b>${esc(l.label)}</b> <span class="sub">${esc(l.sport)} · ${esc(l.match)}</span><div class="sub">${esc(l.raison)}</div></article>`).join('')}</div>` : ''}
+    ${webView(W)}
     ${(D.historique||[]).length ? `<h2>Combinés déjà joués</h2><div class="picks">${D.historique.map(c => `<article class="pick"><div class="top"><div class="who"><b>Cote ${c.cote}</b> <span class="sub">${esc(c.jour)}</span></div>${c.resultat===1?'<span class="chip good">Gagné</span>':c.resultat===0?'<span class="chip bad">Perdu</span>':'<span class="chip">Annulé</span>'}</div><ul>${c.legs.map(l => `<li>${l.resultat===1?'✅':l.resultat===0?'❌':'·'} ${esc(l.label)} <span class="sub">(${esc(l.sport)}, ${esc(l.match)})</span></li>`).join('')}</ul></article>`).join('')}</div>` : ''}
   </div>`;
 }

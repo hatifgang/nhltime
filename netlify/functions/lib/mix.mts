@@ -140,10 +140,20 @@ export async function gradeMix(db: any, eur: any) {
 }
 
 /** Passage complet : note les anciens combinés, propose ceux du jour, garde le suivi. */
-export async function runMix(db: any, nhl: any, nba: any, eur: any) {
+export async function runMix(db: any, nhl: any, nba: any, eur: any, research: any = null) {
   db.combos ||= [];
   const graded = await gradeMix(db, eur);
-  const legs = crowdLegs(nhl, nba, eur);
+  // la recherche web a le dernier mot : une sélection contredite par une info récente (ajustement de 3 points ou plus contre elle) est écartée
+  const R = new Map<string, any>((research?.matchs || []).map((m: any) => [`${m.sport}:${m.game_id}`, m]));
+  const ecartees: any[] = [];
+  const legs = crowdLegs(nhl, nba, eur).filter(l => {
+    const r = R.get(`${l.sport}:${l.game_id}`), ia = r?.ia;
+    if (!ia || l.kind !== 'win') return true;
+    const adj = l.team === r.dom ? ia.ajustement_dom : -ia.ajustement_dom;
+    (l as any).avis_web = ia.verdict;
+    if (adj <= -3) { ecartees.push({ ...l, raison: ia.verdict }); return false; }
+    return true;
+  });
   const combos = bestCombos(legs);
   const today = new Date().toISOString().slice(0, 10);
   // on suit le meilleur combiné de chaque passage (une fois par jour et par composition)
@@ -154,5 +164,5 @@ export async function runMix(db: any, nhl: any, nba: any, eur: any) {
   db.combos = db.combos.slice(-300);
   const done = db.combos.filter((c: any) => c.resultat === 0 || c.resultat === 1);
   const bilan = done.length ? { n: done.length, gagnes: done.filter((c: any) => c.resultat === 1).length, unites: r3(done.reduce((t: number, c: any) => t + (c.resultat ? c.cote - 1 : -1), 0), 2) } : null;
-  return { genere: new Date().toISOString(), legs: legs.sort((a, b) => b.p - a.p), combos, bilan, historique: db.combos.filter((c: any) => c.resultat != null).slice(-40).reverse(), graded };
+  return { genere: new Date().toISOString(), legs: legs.sort((a, b) => b.p - a.p), combos, bilan, ecartees, historique: db.combos.filter((c: any) => c.resultat != null).slice(-40).reverse(), graded };
 }

@@ -32,12 +32,22 @@ for (const t of process.argv.slice(2)) {
 const D = process.env.NHL_LOCAL_STORE!, S = path.resolve('site');
 const rd = (f: string) => { try { return JSON.parse(fs.readFileSync(path.join(D, f), 'utf8')); } catch { return null; } };
 
+// ---- recherche web avant la mise à jour : actus des deux équipes + avis d'une IA gratuite si une clé est configurée
+const { runResearch } = await import('../netlify/functions/lib/research.mts');
+let research: any = null;
+try {
+  const rdb = rd('research_db.json') || {};
+  research = await runResearch(rdb, rd('latest.json'), rd('nba_latest.json'), rd('foot_latest.json'));
+  fs.writeFileSync(path.join(D, 'research_db.json'), JSON.stringify(rdb));
+  console.log('recherche web :', research.matchs.length, 'match(s),', research.appels, "appel(s) d'IA", research.moteur || '(pas de clé : actus seulement)', research.erreurs.join(' | '));
+} catch (e: any) { console.error('ÉCHEC recherche web :', e?.stack || e); }
+
 // ---- combinés « mélange » des choix des autres parieurs (NHL + NBA + KHL)
 const { runMix } = await import('../netlify/functions/lib/mix.mts');
 let mix: any = null;
 try {
   const mdb = rd('mix_db.json') || {};
-  mix = await runMix(mdb, rd('latest.json'), rd('nba_latest.json'), rd('europe_latest.json'));
+  mix = await runMix(mdb, rd('latest.json'), rd('nba_latest.json'), rd('europe_latest.json'), research);
   fs.writeFileSync(path.join(D, 'mix_db.json'), JSON.stringify(mdb));
   console.log('combinés :', mix.combos.length, 'proposé(s),', mix.legs.length, 'sélection(s) du public,', mix.graded, 'noté(s)');
 } catch (e: any) { console.error('ÉCHEC combinés :', e?.stack || e); }
@@ -53,6 +63,7 @@ const ndb = rd('nba_db.json'); if (ndb) delete ndb.boxes;   // boîtes de score 
 wr('nba/history.json', ndb);
 wr('europe/data.json', rd('europe_latest.json'));
 wr('mix.json', mix);
+wr('recherche.json', research);
 wr('foot/data.json', rd('foot_latest.json'));
 wr('tennis/data.json', rd('tennis_latest.json'));
 console.log('site construit :', fs.readdirSync(path.join(S, 'api')).join(', '));

@@ -84,7 +84,7 @@ if (sbOn()) {
       { categorie: 'paris_du_jour', cle: 'mix', contenu: mix }, { categorie: 'paris_du_jour', cle: 'recherche', contenu: research },
     ]);
     console.log('contenu VIP envoyé à Supabase');
-  } catch (e: any) { console.error('ÉCHEC envoi VIP :', e?.message || e); }
+  } catch (e: any) { console.error('ÉCHEC envoi VIP :', String(e?.message || e).replace(/https?:\/\/\S+/g, '[adresse]')); }
   fs.writeFileSync(path.join(S, 'config.js'), `window.NT_CONFIG = ${JSON.stringify({ url: sbUrl(), anon: (process.env.SUPABASE_ANON_KEY || '').trim() })};\n`);
 } else {
   // pas encore de Supabase : le site reste ouvert à tous, comme avant

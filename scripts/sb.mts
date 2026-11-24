@@ -6,6 +6,8 @@ import path from 'node:path';
 
 /** Adresse du projet, quelle que soit la façon dont elle a été collée (avec ou sans https://, identifiant seul, / final, /rest/v1). */
 export function sbUrl(v = process.env.SUPABASE_URL || '') {
+  // une clé collée à la place de l'adresse ne doit jamais partir dans une requête (ni apparaître dans un journal)
+  if (/^(sb_|eyJ)/.test(v.trim())) { console.error('SUPABASE_URL contient une clé, pas l’adresse du projet : configuration ignorée.'); return ''; }
   let u = v.trim().replace(/^["']|["']$/g, '').replace(/\/+$/, '').replace(/\/(rest|auth|storage)\/v1.*$/, '');
   if (!u) return '';
   if (!/^https?:\/\//.test(u)) u = u.includes('.') ? `https://${u}` : `https://${u}.supabase.co`;
@@ -13,7 +15,7 @@ export function sbUrl(v = process.env.SUPABASE_URL || '') {
 }
 const URL_ = sbUrl(), KEY = (process.env.SUPABASE_SERVICE_KEY || '').trim();
 export const sbOn = () => !!(URL_ && KEY);
-const H = (extra: Record<string, string> = {}) => ({ apikey: KEY, Authorization: `Bearer ${KEY}`, ...extra });
+const H = (extra: Record<string, string> = {}) => ({ apikey: KEY, ...(KEY.startsWith('eyJ') ? { Authorization: `Bearer ${KEY}` } : {}), ...extra });
 
 export async function vipUpsert(rows: { categorie: string; cle: string; contenu: any }[]) {
   for (const r of rows) {
@@ -21,7 +23,7 @@ export async function vipUpsert(rows: { categorie: string; cle: string; contenu:
     const res = await fetch(`${URL_}/rest/v1/vip_content?on_conflict=categorie,cle`, {
       method: 'POST', headers: H({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' }),
       body: JSON.stringify([{ ...r, maj: new Date().toISOString() }]) });
-    if (!res.ok) throw new Error(`vip_content ${r.categorie}/${r.cle} : ${res.status} ${(await res.text()).slice(0, 200)}`);
+    if (!res.ok) throw new Error(`vip_content ${r.categorie}/${r.cle} : code ${res.status}`);
   }
 }
 async function list(): Promise<string[]> {

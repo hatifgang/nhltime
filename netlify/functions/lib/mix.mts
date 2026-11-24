@@ -5,84 +5,86 @@ import { safe, r3 } from './util.mts';
 import { scoreboard } from './nba/espn.mts';
 
 export interface Leg { id: string; sport: string; game_id: string; date: string; utc: string | null; match: string; heure: string;
-  kind: 'win' | 'over' | 'under' | 'eur'; team?: string; code?: string; line?: number; label: string; p: number; cote: number; foule: string; force: number }
+  kind: 'win' | 'over' | 'under' | 'spread' | 'eur'; team?: string; code?: string; line?: number; label: string; p: number; cote: number; foule: string; force: number; sources: number }
 
-const P_MIN = 0.58, COTE_MIN = 1.12;
-const okLeg = (l: Partial<Leg>) => l.p != null && l.cote != null && l.p >= P_MIN && l.cote >= COTE_MIN && l.p * l.cote >= 0.90;  // pas de cote nettement trop basse (gros favoris du public tolérés)
+const P_MIN = 0.55, COTE_MIN = 1.12;
+const okLeg = (l: Partial<Leg>) => l.p != null && l.cote != null && l.p >= P_MIN && l.cote >= COTE_MIN && l.p * l.cote >= 0.88;  // pas de cote nettement trop basse (gros favoris du public tolérés)
 
-/** Sélections jouées par les autres parieurs, encore à venir, avec cote et probabilité. */
+/** Sélections jouées par les autres parieurs, encore à venir, avec cote et probabilité.
+ * Sources : public et meilleurs parieurs Covers, tipsters OLBG, top 5 des parieurs Covers (NHL, NBA) ; votants sports.ru (KHL). */
 export function crowdLegs(nhl: any, nba: any, eur: any, now = Date.now()): Leg[] {
-  const out: Leg[] = [];
-  const push = (l: Leg) => { if (okLeg(l)) out.push(l); };
-  // NHL : public Covers (≥ 60 %) ou meilleurs parieurs (majorité nette)
-  for (const g of nhl?.games || []) {
-    if (!['FUT', 'PRE'].includes(g.etat)) continue;
-    const pr = g.parieurs || {}, dom = g.domicile, ext = g.exterieur, m = `${ext} @ ${dom}`;
-    for (const side of ['dom', 'ext'] as const) {
-      const pub = pr[`public_${side}`], led = pr[`leaders_${side}`] || 0, oth = pr[`leaders_${side === 'dom' ? 'ext' : 'dom'}`] || 0;
-      if (!((pub ?? 0) >= 60 || (led >= 5 && led >= 2 * oth))) continue;
-      const team = side === 'dom' ? dom : ext;
-      push({ id: `nhl:${g.game_id}:win:${team}`, sport: 'NHL', game_id: String(g.game_id), date: g.date, utc: null, match: m, heure: g.debut_paris, kind: 'win', team,
-        label: `${team} gagne (prolongation incluse)`, p: g[`p_${side}`], cote: g[`cote_${side}`], force: Math.max(pub ?? 0, led + oth ? 100 * led / (led + oth) : 0),
-        foule: [pub != null ? `${pub} % du public` : '', led ? `${led} meilleurs parieurs contre ${oth}` : ''].filter(Boolean).join(', ') });
+  const byId = new Map<string, Leg>();
+  const add = (l: Omit<Leg, 'id' | 'sources'>) => {
+    const id = `${l.sport}:${l.game_id}:${l.kind}:${l.team || ''}:${l.line ?? ''}:${l.code || ''}`;
+    const cur = byId.get(id);
+    if (cur) { if (!cur.foule.includes(l.foule)) cur.foule += ' · ' + l.foule; cur.force = Math.max(cur.force, l.force); cur.sources++; if (!cur.cote && l.cote) cur.cote = l.cote; if (cur.p == null && l.p != null) cur.p = l.p; return; }
+    byId.set(id, { ...l, id, sources: 1 } as Leg);
+  };
+  const leagues: [string, any, (g: any) => boolean][] = [['NHL', nhl, g => ['FUT', 'PRE'].includes(g.etat)], ['NBA', nba, g => g.etat === 'pre']];
+  for (const [sport, D, upcoming] of leagues) {
+    const games = new Map<string, any>((D?.games || []).filter(upcoming).map((g: any) => [String(g.game_id), g]));
+    const unit = sport === 'NHL' ? 'buts' : 'points';
+    const base = (g: any) => ({ sport, game_id: String(g.game_id), date: g.date, utc: null, match: `${g.exterieur} @ ${g.domicile}`, heure: g.debut_paris });
+    const lab = (k: string, team?: string, line?: number) => k === 'win' ? `${team} gagne${sport === 'NHL' ? ' (prolongation incluse)' : ''}` : k === 'spread' ? `${team} ${line! > 0 ? '+' : ''}${line} (handicap)` : `${k === 'over' ? 'Plus' : 'Moins'} de ${line} ${unit}`;
+    // 1. public et meilleurs parieurs Covers (consensus du match)
+    for (const g of games.values()) {
+      const pr = g.parieurs || {};
+      const maj = (pub: any, led: number, oth: number) => (pub ?? 0) >= 60 || (led >= 5 && led >= 2 * oth);
+      const txt = (pub: any, led: number, oth: number) => [pub != null ? `${pub} % du public Covers` : '', led ? `${led} meilleurs parieurs contre ${oth}` : ''].filter(Boolean).join(', ');
+      const frc = (pub: any, led: number, oth: number) => Math.max(pub ?? 0, led + oth ? Math.round(100 * led / (led + oth)) : 0);
+      for (const side of ['dom', 'ext'] as const) {
+        const pub = pr[`public_${side}`], led = pr[`leaders_${side}`] || 0, oth = pr[`leaders_${side === 'dom' ? 'ext' : 'dom'}`] || 0;
+        if (!maj(pub, led, oth)) continue;
+        const team = side === 'dom' ? g.domicile : g.exterieur;
+        add({ ...base(g), kind: 'win', team, label: lab('win', team), p: g[`p_${side}`], cote: g[`cote_${side}`], force: frc(pub, led, oth), foule: txt(pub, led, oth) });
+      }
+      const ou = sport === 'NHL' ? g.ou : g.marches?.total;
+      if (ou?.line != null) for (const k of ['over', 'under'] as const) {
+        const pub = k === 'over' ? pr.over_pct : pr.over_pct != null ? 100 - pr.over_pct : null;
+        const led = pr[`leaders_${k}`] || 0, oth = pr[`leaders_${k === 'over' ? 'under' : 'over'}`] || 0;
+        if (!maj(pub, led, oth)) continue;
+        add({ ...base(g), kind: k, line: ou.line, label: lab(k, undefined, ou.line), p: ou[`p_${k}`], cote: ou[`cote_${k}`], force: frc(pub, led, oth), foule: txt(pub, led, oth) });
+      }
     }
-    const ou = g.ou;
-    if (ou?.line != null) for (const s of ['over', 'under'] as const) {
-      const pub = s === 'over' ? pr.over_pct : pr.over_pct != null ? 100 - pr.over_pct : null;
-      const led = pr[`leaders_${s}`] || 0, oth = pr[`leaders_${s === 'over' ? 'under' : 'over'}`] || 0;
-      if (!((pub ?? 0) >= 60 || (led >= 5 && led >= 2 * oth))) continue;
-      push({ id: `nhl:${g.game_id}:${s}:${ou.line}`, sport: 'NHL', game_id: String(g.game_id), date: g.date, utc: null, match: m, heure: g.debut_paris, kind: s, line: ou.line,
-        label: `${s === 'over' ? 'Plus' : 'Moins'} de ${ou.line} buts`, p: ou[`p_${s}`], cote: ou[`cote_${s}`], force: Math.max(pub ?? 0, led + oth ? 100 * led / (led + oth) : 0),
-        foule: [pub != null ? `${pub} % du public` : '', led ? `${led} meilleurs parieurs contre ${oth}` : ''].filter(Boolean).join(', ') });
+    // 2. consensus des tipsters OLBG (au moins 60 % d'accord, 3 tipsters ou plus)
+    for (const m of D?.selection?.olbg?.matchs || []) {
+      const g = games.get(String(m.game_id)); if (!g || m.commence) continue;
+      for (const c of m.consensus || []) {
+        if (!c.leg || c.pct < 0.6 || c.total < 3 || c.notre == null || !c.cote) continue;
+        add({ ...base(g), kind: c.leg.kind, team: c.leg.team, line: c.leg.line, label: c.label || lab(c.leg.kind, c.leg.team, c.leg.line), p: c.notre, cote: c.cote, force: Math.round(100 * c.pct), foule: `${c.n}/${c.total} tipsters OLBG` });
+      }
     }
-  }
-  // NBA : même logique (Covers)
-  for (const g of nba?.games || []) {
-    if (g.etat !== 'pre') continue;
-    const pr = g.parieurs || {}, dom = g.domicile, ext = g.exterieur, m = `${ext} @ ${dom}`;
-    for (const side of ['dom', 'ext'] as const) {
-      const pub = pr[`public_${side}`], led = pr[`leaders_${side}`] || 0, oth = pr[`leaders_${side === 'dom' ? 'ext' : 'dom'}`] || 0;
-      if (!((pub ?? 0) >= 60 || (led >= 5 && led >= 2 * oth))) continue;
-      const team = side === 'dom' ? dom : ext;
-      push({ id: `nba:${g.game_id}:win:${team}`, sport: 'NBA', game_id: String(g.game_id), date: g.date, utc: null, match: m, heure: g.debut_paris, kind: 'win', team,
-        label: `${team} gagne`, p: g[`p_${side}`], cote: g[`cote_${side}`], force: Math.max(pub ?? 0, led + oth ? 100 * led / (led + oth) : 0),
-        foule: [pub != null ? `${pub} % du public` : '', led ? `${led} meilleurs parieurs contre ${oth}` : ''].filter(Boolean).join(', ') });
-    }
-    const t = g.marches?.total;
-    if (t?.line != null) for (const s of ['over', 'under'] as const) {
-      const pub = s === 'over' ? pr.over_pct : pr.over_pct != null ? 100 - pr.over_pct : null;
-      const led = pr[`leaders_${s}`] || 0, oth = pr[`leaders_${s === 'over' ? 'under' : 'over'}`] || 0;
-      if (!((pub ?? 0) >= 60 || (led >= 5 && led >= 2 * oth))) continue;
-      push({ id: `nba:${g.game_id}:${s}:${t.line}`, sport: 'NBA', game_id: String(g.game_id), date: g.date, utc: null, match: m, heure: g.debut_paris, kind: s, line: t.line,
-        label: `${s === 'over' ? 'Plus' : 'Moins'} de ${t.line} points`, p: t[`p_${s}`], cote: t[`cote_${s}`], force: Math.max(pub ?? 0, led + oth ? 100 * led / (led + oth) : 0),
-        foule: [pub != null ? `${pub} % du public` : '', led ? `${led} meilleurs parieurs contre ${oth}` : ''].filter(Boolean).join(', ') });
+    // 3. paris du jour des 5 meilleurs parieurs Covers
+    for (const b of D?.selection?.top5?.parieurs || []) for (const a of b.paris || []) {
+      const g = games.get(String(a.game_id)); if (!g || a.commence || a.notre == null || !a.cote) continue;
+      add({ ...base(g), kind: a.kind, team: a.team ?? undefined, line: a.line ?? undefined, label: lab(a.kind, a.team ?? undefined, a.line ?? undefined), p: a.notre, cote: a.cote, force: Math.round(100 * (b.taux || 0.6)), foule: `pari de ${b.nom} (top ${b.rang} Covers, ${b.record})` });
     }
   }
   // KHL : vote des internautes sports.ru (camp majoritaire, pari à plus de 50 % déjà choisi par le pipeline Europe)
   for (const x of eur?.public || []) {
     if (!x.utc || Date.parse(x.utc) < now) continue;
-    push({ id: `eur:${x.game_id}:${x.code}`, sport: x.lg || 'KHL', game_id: String(x.game_id), date: String(x.utc).slice(0, 10), utc: x.utc, match: x.match, heure: x.heure, kind: 'eur', code: x.code,
+    add({ sport: x.lg || 'KHL', game_id: String(x.game_id), date: String(x.utc).slice(0, 10), utc: x.utc, match: x.match, heure: x.heure, kind: 'eur', code: x.code,
       label: x.label, p: x.prob, cote: x.cote_book, force: Math.round(100 * x.part), foule: `${Math.round(100 * x.part)} % des ${x.votes} votants sports.ru` });
   }
-  return out;
+  return [...byId.values()].filter(okLeg);
 }
 
 /** Combinés de 2 ou 3 sélections (matchs différents) dont la cote totale tourne autour de 2. */
 export function bestCombos(legs: Leg[], n = 6) {
   const res: any[] = [];
-  const L = [...legs].sort((a, b) => b.p - a.p).slice(0, 40);
+  const L = [...legs].sort((a, b) => b.p - a.p).slice(0, 45);
   const add = (ls: Leg[]) => {
     if (new Set(ls.map(l => l.game_id)).size < ls.length) return;
     const cote = ls.reduce((t, l) => t * l.cote, 1), p = ls.reduce((t, l) => t * l.p, 1);
     if (cote < 1.8 || cote > 2.4) return;
-    res.push({ legs: ls, cote: r3(cote, 2), prob: r3(p), ev: r3(p * cote - 1), sports: [...new Set(ls.map(l => l.sport))], foule: r3(ls.reduce((t, l) => t + l.force, 0) / ls.length, 0) });
+    res.push({ legs: ls, cote: r3(cote, 2), prob: r3(p), ev: r3(p * cote - 1), sports: [...new Set(ls.map(l => l.sport))], foule: r3(ls.reduce((t, l) => t + l.force, 0) / ls.length, 0), sources: ls.reduce((t, l) => t + l.sources, 0) });
   };
   for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) {
     add([L[i], L[j]]);
     for (let k = j + 1; k < L.length; k++) add([L[i], L[j], L[k]]);
   }
   // les plus sûrs d'abord ; on évite de répéter la même sélection dans plus de 2 combinés
-  res.sort((a, b) => b.prob - a.prob || b.ev - a.ev);
+  res.sort((a, b) => (b.prob + 0.01 * b.sources) - (a.prob + 0.01 * a.sources) || b.ev - a.ev);   // les plus sûrs, léger bonus quand plusieurs sources sont d'accord
   const used: Record<string, number> = {}, out: any[] = [];
   for (const c of res) {
     if (c.legs.some((l: Leg) => (used[l.id] || 0) >= 2)) continue;
@@ -113,6 +115,7 @@ function legResult(l: Leg, sc: any, eurHist: any[]): number | null {
   if (l.kind === 'win') return (l.team === sc.dom ? sc.sd > sc.se : sc.se > sc.sd) ? 1 : 0;
   if (l.kind === 'over') return tot > l.line! ? 1 : 0;
   if (l.kind === 'under') return tot < l.line! ? 1 : 0;
+  if (l.kind === 'spread') { const m = (l.team === sc.dom ? sc.sd - sc.se : sc.se - sc.sd) + l.line!; return m >= 0 ? 1 : 0; }   // égalité (remboursé) comptée comme passée
   return null;
 }
 export async function gradeMix(db: any, eur: any) {
